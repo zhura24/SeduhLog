@@ -40,20 +40,25 @@ function AppLayout({ toast, setToast, theme, setTheme }) {
   const queryClient = useQueryClient();
   const isForm = /\/(new|edit)$/.test(location.pathname);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const notify = (message, type = 'success') => setToast({ message, type });
   useEffect(() => {
     fetchData('/health').catch(() => {});
     const onPrompt = event => { event.preventDefault(); setInstallPrompt(event); };
     window.addEventListener('beforeinstallprompt', onPrompt);
-    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone;
-    setIosInstall(isIos);
     return () => window.removeEventListener('beforeinstallprompt', onPrompt);
-  }, [isStandalone]);
+  }, []);
   const install = async () => {
-    if (installPrompt) { await installPrompt.prompt(); setInstallPrompt(null); }
-    else if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone) setIosInstall(true);
+    if (isStandalone) {
+      notify('SeduhLog sudah terpasang di layar utama.');
+      return;
+    }
+    if (installPrompt) { await installPrompt.prompt(); setInstallPrompt(null); return; }
+    if (isIos) { setIosInstall(true); return; }
+    notify('Gunakan menu browser untuk menambahkan SeduhLog ke layar utama.', 'error');
   };
   const dismissBanner = () => { localStorage.setItem('seduhlog-install-dismissed', '1'); setInstallBanner(false); };
-  const context = { toast: (message, type = 'success') => setToast({ message, type }), install, installPrompt, iosInstall, online, theme, setTheme };
+  const context = { toast: notify, install, installPrompt, isStandalone, isIos, online, theme, setTheme };
 
   return <div className="app-shell">
     {!online && <div className="network-banner"><WifiOff size={15} /> Mode offline · Timer dan kalkulator tetap tersedia</div>}
@@ -61,7 +66,7 @@ function AppLayout({ toast, setToast, theme, setTheme }) {
     <div className="page-frame"><Outlet context={context} /></div>
     {!isForm && <BottomNav />}
     {!isForm && !isStandalone && installPrompt && installBanner && location.pathname === '/' && <div className="install-banner"><span><Coffee size={18} /> Pasang SeduhLog di perangkatmu</span><button onClick={install}>Pasang</button><button aria-label="Tutup" onClick={dismissBanner}><X size={16}/></button></div>}
-    {iosInstall && !isStandalone && location.pathname === '/settings' && <InstallSheet onClose={() => setIosInstall(false)} />}
+    {iosInstall && !isStandalone && <InstallSheet onClose={() => setIosInstall(false)} />}
     {toast.message && <div className={`toast ${toast.type === 'error' ? 'toast-error' : ''}`} role="status">{toast.type === 'error' ? <CircleHelp size={18}/> : <Check size={18}/>} {toast.message}<button aria-label="Tutup notifikasi" onClick={() => setToast({message:'',type:'success'})}><X size={16}/></button></div>}
     <button className="sr-only" onClick={() => queryClient.clear()}>Bersihkan cache</button>
   </div>;
@@ -455,13 +460,13 @@ function AboutPage() {
 }
 
 function SettingsPage() {
-  const {toast,install,installPrompt,online,theme,setTheme}=useOutletContext();
+  const {toast,install,installPrompt,isStandalone,isIos,online,theme,setTheme}=useOutletContext();
   const queryClient=useQueryClient();
   return <main><PageHeader title="Pengaturan aplikasi" back eyebrow="SESUAIKAN PENGALAMAN"/>
     <Card className="settings-card settings-page-card"><div className="section-title"><div><div className="eyebrow">PREFERENSI</div><h2>Tampilan & perangkat</h2></div><Settings size={19}/></div>
       <div className="setting-item"><div><b>Tampilan</b><small>Sesuaikan suasana aplikasi</small></div><select aria-label="Tema tampilan" value={theme} onChange={event=>setTheme(event.target.value)}><option value="light">Terang</option><option value="dark">Gelap</option><option value="system">Ikuti sistem</option></select></div>
       <div className="setting-item"><div><b>Koneksi</b><small>{online?'Semua fitur siap digunakan':'Timer tetap dapat digunakan offline'}</small></div><span className={`connection ${online?'online':'offline'}`}>{online?<Wifi size={16}/>:<WifiOff size={16}/>} {online?'Online':'Offline'}</span></div>
-      <div className="setting-item"><div><b>Pasang aplikasi</b><small>Tambahkan ke layar utama</small></div><button className="button button-small button-outline" onClick={install}>{installPrompt?'Pasang':'Petunjuk'} <Upload size={15}/></button></div>
+      <div className="setting-item"><div><b>Pasang aplikasi</b><small>{isStandalone?'SeduhLog sudah terpasang di layar utama':isIos?'Tambahkan melalui menu Bagikan di Safari':'Tambahkan ke layar utama'}</small></div><button className="button button-small button-outline" onClick={install} disabled={isStandalone}>{isStandalone?'Terpasang':installPrompt?'Pasang':'Petunjuk'} {isStandalone?<Check size={15}/>:<Upload size={15}/>}</button></div>
       <div className="setting-item"><div><b>Bersihkan cache data</b><small>Hapus salinan data yang tersimpan</small></div><button className="button button-small button-outline" onClick={()=>{queryClient.clear();toast('Cache data berhasil dibersihkan');}}>Bersihkan</button></div>
     </Card>
     <p className="profile-note">Penghapusan cache mengosongkan data lokal yang tersimpan; data di Supabase tidak dihapus.</p>
@@ -469,7 +474,7 @@ function SettingsPage() {
 }
 
 function InstallSheet({onClose}) {
-  return <div className="modal-backdrop" onClick={onClose}><section className="install-sheet" onClick={event=>event.stopPropagation()}><button className="sheet-close" aria-label="Tutup petunjuk" onClick={onClose}><X/></button><div className="share-illustration"><Share size={25}/><ArrowDown size={18}/><Plus size={22}/></div><h2>Pasang SeduhLog</h2><p>Ketuk ikon Bagikan, lalu pilih <b>Tambah ke Layar Utama</b>.</p><button className="button button-primary full-button" onClick={onClose}>Mengerti</button></section></div>;
+  return <div className="modal-backdrop" onClick={onClose}><section className="install-sheet" role="dialog" aria-modal="true" aria-labelledby="install-title" onClick={event=>event.stopPropagation()}><button className="sheet-close" aria-label="Tutup petunjuk" onClick={onClose}><X/></button><div className="share-illustration"><Share size={25}/><ArrowDown size={18}/><Plus size={22}/></div><h2 id="install-title">Cara pasang di iPhone</h2><ol className="install-steps"><li>Buka SeduhLog melalui Safari.</li><li>Ketuk ikon <b>Bagikan</b>.</li><li>Pilih <b>Tambahkan ke Layar Utama</b>, lalu ketuk <b>Tambah</b>.</li></ol><button className="button button-primary full-button" onClick={onClose}>Mengerti</button></section></div>;
 }
 
 function NotFound() {
