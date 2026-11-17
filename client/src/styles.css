@@ -512,12 +512,12 @@ p { line-height: 1.65; }
 
 @media (min-width: 700px) {
   .splash-shell { width: min(100%, 900px); }
-  .splash-main { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: center; gap: 25px; }
+  .splash-main { display: grid; grid-template-columns: minmax(0,.9fr) minmax(0,1.1fr); align-items: center; gap: 25px; }
   .splash-visual { width: 100%; height: min(55svh, 430px); }
   .splash-halo { width: 260px; height: 260px; }
   .splash-cup { width: 230px; height: 245px; }
   .splash-cup-logo { width: 190px; height: 190px; border-radius: 48px; }
-  .splash-message h1 { font-size: clamp(48px, 6vw, 70px); }
+  .splash-message h1 { font-size: clamp(40px, 3.8vw, 52px); line-height: 1.08; }
   .splash-description { margin-left: 0; }
   .splash-progress { justify-content: flex-start; }
   .splash-actions { align-items: flex-start; }
