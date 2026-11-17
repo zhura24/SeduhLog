@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -30,7 +30,7 @@ function useOnline() {
   return online;
 }
 
-function AppLayout({ toast, setToast }) {
+function AppLayout({ toast, setToast, theme, setTheme }) {
   const location = useLocation();
   const online = useOnline();
   const { needRefresh, updateServiceWorker } = useRegisterSW();
@@ -53,7 +53,7 @@ function AppLayout({ toast, setToast }) {
     else if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone) setIosInstall(true);
   };
   const dismissBanner = () => { localStorage.setItem('seduhlog-install-dismissed', '1'); setInstallBanner(false); };
-  const context = { toast: (message, type = 'success') => setToast({ message, type }), install, installPrompt, iosInstall, online };
+  const context = { toast: (message, type = 'success') => setToast({ message, type }), install, installPrompt, iosInstall, online, theme, setTheme };
 
   return <div className="app-shell">
     {!online && <div className="network-banner"><WifiOff size={15} /> Mode offline · Timer dan kalkulator tetap tersedia</div>}
@@ -240,7 +240,7 @@ function BrewDetail() {
     {brew.notes&&<Card className="notes-card"><div className="eyebrow">CATATAN PRIBADI</div><p>{brew.notes}</p></Card>}
     <Link className="related-link" to={`/beans/${brew.bean?.id}`}><BeanIcon size={18}/> Lihat detail biji <ArrowRight size={16}/></Link>
     <div className="detail-actions"><Link className="button button-outline" to={`/brews/${id}/edit`}>Ubah catatan</Link><button className="button button-danger-soft" onClick={()=>setConfirm(true)}>Hapus</button></div>
-    <button className="button button-primary full-button" onClick={()=>navigate('/timer',{state:{method:brew.method,doseGrams:brew.doseGrams,waterGrams:brew.waterGrams,waterTempC:brew.waterTempC}})}><RotateCcw size={17}/> Seduh lagi</button>
+    <button className="button button-primary full-button" onClick={()=>navigate(`/timer${brew.bean?.id?`?beanId=${encodeURIComponent(brew.bean.id)}`:''}`,{state:{method:brew.method,beanId:brew.bean?.id,doseGrams:brew.doseGrams,waterGrams:brew.waterGrams,waterTempC:brew.waterTempC}})}><RotateCcw size={17}/> Seduh lagi</button>
   </div>}</DataState>{confirm&&<ConfirmDialog title="Hapus catatan ini?" description="Catatan seduhan yang dihapus tidak dapat dikembalikan." onCancel={()=>setConfirm(false)} onConfirm={()=>remove.mutate()} pending={remove.isPending}/>}</main>;
 }
 function Param({ label, value }) { return <div className="parameter"><span>{label}</span><b>{value}</b></div>; }
@@ -259,7 +259,7 @@ function BeanDetail() {
     <Card className="bean-info"><h3>Informasi biji</h3><Param label="Ketinggian" value={bean.altitudeMasl?`${bean.altitudeMasl} mdpl`:'—'}/><Param label="Tanggal sangrai" value={bean.roastDate?dateLabel(bean.roastDate):'—'}/>{bean.notes&&<p>{bean.notes}</p>}</Card>
     {bean.flavorNotes?.length>0&&<div className="detail-block"><h3>Catatan rasa</h3><div className="chip-list">{bean.flavorNotes.map(note=><span className="taste-chip" key={note}>{note}</span>)}</div></div>}
     <div className="section-title"><h2>Seduhan dengan biji ini</h2></div>{bean.recentBrews?.length?bean.recentBrews.map(brew=><BrewCard key={brew.id} brew={brew} compact/>):<div className="empty-inline">Belum pernah diseduh.</div>}
-    <Link className="button button-primary full-button" to={`/brews/new?beanId=${bean.id}`}><Coffee size={17}/> Seduh dengan biji ini</Link>
+    <Link className="button button-primary full-button" to={`/timer?beanId=${encodeURIComponent(bean.id)}`}><Coffee size={17}/> Mulai seduh dengan biji ini</Link>
     <div className="detail-actions"><Link className="button button-outline" to={`/beans/${id}/edit`}>Ubah biji</Link><button className="button button-danger-soft" onClick={()=>setConfirm(true)}>Hapus</button></div>
   </div>}</DataState>{confirm&&<ConfirmDialog title="Hapus biji ini?" description="Biji yang masih digunakan oleh seduhan tidak dapat dihapus." onCancel={()=>setConfirm(false)} onConfirm={()=>remove.mutate()} pending={remove.isPending}/>}</main>;
 }
@@ -302,17 +302,21 @@ function BrewForm() {
   const save=useMutation({mutationFn:data=>editing?jsonMutation(`/brews/${id}`,'PUT',data):jsonMutation('/brews','POST',data),onSuccess:result=>{queryClient.invalidateQueries({queryKey:queryKeys.brews});queryClient.invalidateQueries({queryKey:queryKeys.stats});queryClient.invalidateQueries({queryKey:queryKeys.beans});toast('Seduhan tersimpan');navigate(`/brews/${result.data.id}`);},onError:error=>{setErrors(Object.fromEntries((error.errors||[]).map(item=>[item.field,item.message])));toast(error.message,'error');}});
   const update=(key,value)=>{setForm(current=>({...current,[key]:value}));setErrors(current=>({...current,[key]:''}));};
   const applyMethod=value=>{const preset=methods.find(item=>item.method===value);update('method',value);if(!editing&&preset)setForm(current=>({...current,method:value,waterTempC:preset.temperature,grindSize:preset.grind,waterGrams:Math.round(current.doseGrams*preset.ratio)}));};
+  const selectedMethod=methods.find(item=>item.method===form.method)||methods[0];
+  const calculateWaterFromDose=()=>update('waterGrams',calculateRatio({mode:'water',dose:form.doseGrams,ratio:selectedMethod.ratio}).water);
+  const calculateDoseFromWater=()=>update('doseGrams',calculateRatio({mode:'dose',water:form.waterGrams,ratio:selectedMethod.ratio}).dose);
   const addTaste=value=>{const tag=(value||taste).trim();if(tag&&!form.tasteTags.includes(tag)&&form.tasteTags.length<8){update('tasteTags',[...form.tasteTags,tag]);setTaste('');}};
-  const submit=event=>{event.preventDefault();const next={};if(!form.bean)next.bean='Pilih biji kopi';if(!form.rating)next.rating='Pilih rating';if(form.doseGrams<5||form.doseGrams>100)next.doseGrams='Dosis harus 5–100 gram';if(form.waterGrams<20||form.waterGrams>2000)next.waterGrams='Air harus 20–2000 gram';setErrors(next);if(Object.keys(next).length)return;const data={...form,bean:form.bean,doseGrams:Number(form.doseGrams),waterGrams:Number(form.waterGrams),waterTempC:form.waterTempC===''?undefined:Number(form.waterTempC),grindSize:form.grindSize||undefined,brewTimeSeconds:form.brewTimeSeconds===''?undefined:Number(form.brewTimeSeconds),tdsPercent:form.tdsPercent===''?undefined:Number(form.tdsPercent),brewedAt:form.brewedAt?new Date(form.brewedAt).toISOString():undefined};save.mutate(data);};
+  const submit=event=>{event.preventDefault();const next={};if(!form.bean)next.bean='Pilih biji kopi';if(!form.rating)next.rating='Pilih rating';if(form.doseGrams<5||form.doseGrams>100)next.doseGrams='Dosis harus 5–100 gram';if(form.waterGrams<20||form.waterGrams>2000)next.waterGrams='Air harus 20–2000 gram';setErrors(next);if(Object.keys(next).length){toast(next.rating?'Pilih rating sebelum menyimpan.':'Periksa kembali data yang ditandai sebelum menyimpan.','error');const firstInvalidId=next.bean?'brew-bean':next.doseGrams?'dose':next.waterGrams?'water':'rating-field';document.getElementById(firstInvalidId)?.scrollIntoView({behavior:'smooth',block:'center'});return;}const data={...form,bean:form.bean,doseGrams:Number(form.doseGrams),waterGrams:Number(form.waterGrams),waterTempC:form.waterTempC===''?undefined:Number(form.waterTempC),grindSize:form.grindSize||undefined,brewTimeSeconds:form.brewTimeSeconds===''?undefined:Number(form.brewTimeSeconds),tdsPercent:form.tdsPercent===''?undefined:Number(form.tdsPercent),brewedAt:form.brewedAt?new Date(form.brewedAt).toISOString():undefined};save.mutate(data);};
   return <main className="form-page"><PageHeader title={editing?'Ubah seduhan':'Catat seduhan'} back eyebrow="JURNAL SEDUH"/>{(editing&&existing.isPending)||beanQuery.isPending?<Loading rows={5}/>:<form className="form-content" onSubmit={submit} noValidate>
     <div className="field"><label htmlFor="brew-bean">Biji kopi *</label><select id="brew-bean" value={form.bean} onChange={e=>update('bean',e.target.value)}><option value="">Pilih biji</option>{beans.map(bean=><option key={bean.id} value={bean.id}>{bean.name} · {bean.origin}</option>)}</select>{errors.bean&&<small className="field-error">{errors.bean}</small>}<Link className="helper-link" to="/beans/new">+ Tambah biji baru</Link></div>
     <div className="field"><label>Metode seduh</label><div className="method-grid">{methods.map(item=><button type="button" key={item.method} className={`method-option ${form.method===item.method?'selected':''}`} onClick={()=>applyMethod(item.method)}><Coffee size={17}/>{item.label}</button>)}</div></div>
     <div className="field-row"><div className="field"><label htmlFor="dose">Dosis (g) *</label><input id="dose" type="number" min="5" max="100" step="0.1" value={form.doseGrams} onChange={e=>update('doseGrams',safeNumber(e.target.value))}/>{errors.doseGrams&&<small className="field-error">{errors.doseGrams}</small>}</div><div className="field"><label htmlFor="water">Air (g) *</label><input id="water" type="number" min="20" max="2000" step="1" value={form.waterGrams} onChange={e=>update('waterGrams',safeNumber(e.target.value))}/>{errors.waterGrams&&<small className="field-error">{errors.waterGrams}</small>}</div></div>
     <div className="ratio-preview"><span>Rasio seduh</span><b>1:{(Number(form.waterGrams||0)/Math.max(Number(form.doseGrams||1),1)).toFixed(1)}</b></div>
+    <div className="ratio-calculator"><span>Hitung dengan preset {selectedMethod.label} · 1:{selectedMethod.ratio}</span><div className="ratio-actions"><button type="button" className="button button-outline" onClick={calculateWaterFromDose} disabled={!Number(form.doseGrams)}>Hitung air dari dosis</button><button type="button" className="button button-outline" onClick={calculateDoseFromWater} disabled={!Number(form.waterGrams)}>Hitung dosis dari air</button></div></div>
     <div className="field-row"><div className="field"><label htmlFor="temp">Suhu air (°C)</label><input id="temp" type="number" min="0" max="100" value={form.waterTempC} onChange={e=>update('waterTempC',safeNumber(e.target.value))}/></div><div className="field"><label htmlFor="grind">Ukuran giling</label><select id="grind" value={form.grindSize||''} onChange={e=>update('grindSize',e.target.value)}><option value="">Pilih</option>{['extra_fine','fine','medium_fine','medium','medium_coarse','coarse'].map(v=><option key={v} value={v}>{grindLabel(v)}</option>)}</select></div></div>
     <div className="field-row"><div className="field"><label htmlFor="grinder-setting">Setting grinder</label><input id="grinder-setting" value={form.grinderSetting||''} onChange={e=>update('grinderSetting',e.target.value)} placeholder="21 klik"/></div><div className="field"><label htmlFor="brew-time">Waktu (detik)</label><input id="brew-time" type="number" min="0" max="86400" value={form.brewTimeSeconds} onChange={e=>update('brewTimeSeconds',safeNumber(e.target.value))}/></div></div>
     <div className="field"><label htmlFor="tds">TDS (%)</label><input id="tds" type="number" min="0" max="20" step="0.01" value={form.tdsPercent} onChange={e=>update('tdsPercent',safeNumber(e.target.value))}/></div>
-    <div className="field"><label>Rating *</label><div className="rating-picker" role="radiogroup" aria-label="Pilih rating">{[1,2,3,4,5].map(value=><button key={value} type="button" aria-label={`${value} bintang`} aria-checked={form.rating===value} role="radio" onClick={()=>update('rating',value)}><Star fill={value<=form.rating?'currentColor':'none'} size={29}/></button>)}</div>{errors.rating&&<small className="field-error">{errors.rating}</small>}</div>
+    <div id="rating-field" className="field"><label>Rating *</label><div className="rating-picker" role="radiogroup" aria-label="Pilih rating" aria-invalid={Boolean(errors.rating)} aria-describedby={errors.rating?'rating-error':undefined}>{[1,2,3,4,5].map(value=><button key={value} type="button" aria-label={`${value} bintang`} aria-checked={form.rating===value} role="radio" onClick={()=>update('rating',value)}><Star fill={value<=form.rating?'currentColor':'none'} size={29}/></button>)}</div>{errors.rating&&<small id="rating-error" className="field-error" role="alert">{errors.rating}</small>}</div>
     <button type="button" className="accordion-toggle" onClick={()=>setShowCupping(!showCupping)}><span>Catatan cupping <small>(opsional)</small></span>{showCupping?<Minus size={17}/>:<Plus size={17}/>}</button>
     {showCupping&&<div className="cupping-form">{Object.entries(labels).map(([key,label])=><label className="rating-slider" key={key}><span>{label}<b>{form.cupping[key]||5}</b></span><input aria-label={label} type="range" min="1" max="10" value={form.cupping[key]||5} onChange={e=>update('cupping',{...form.cupping,[key]:Number(e.target.value)})}/></label>)}</div>}
     <div className="field"><label>Tag rasa</label><div className="chip-list suggestion-list">{['Cokelat','Karamel','Buah beri','Jeruk','Floral','Kacang','Rempah','Manis madu','Earthy','Asam segar'].map(item=><Chip key={item} selected={form.tasteTags.includes(item)} onClick={()=>form.tasteTags.includes(item)?update('tasteTags',form.tasteTags.filter(x=>x!==item)):addTaste(item)}>{item}</Chip>)}</div><div className="chip-entry"><input value={taste} onChange={e=>setTaste(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addTaste();}}} placeholder="Tag lainnya..."/><button type="button" onClick={()=>addTaste()}><Plus size={17}/></button></div></div>
@@ -323,7 +327,9 @@ function BrewForm() {
 }
 
 function TimerPage() {
-  const navigate=useNavigate(); const location=useLocation(); const [section,setSection]=useState('timer');
+  const navigate=useNavigate(); const location=useLocation(); const [searchParams]=useSearchParams(); const [section,setSection]=useState('timer');
+  const beanId=searchParams.get('beanId')||location.state?.beanId||'';
+  const beanQuery=useQuery({queryKey:[...queryKeys.beans,beanId],queryFn:()=>fetchData(`/beans/${beanId}`),enabled:Boolean(beanId)});
   const [methodKey,setMethodKey]=useState(location.state?.method||'v60');
   const [dose,setDose]=useState(Number(location.state?.doseGrams)||15);
   const [water,setWater]=useState(Number(location.state?.waterGrams)||240);
@@ -340,8 +346,10 @@ function TimerPage() {
   const changeMethod=value=>{const preset=methods.find(item=>item.method===value);setMethodKey(value);setRatio(preset.ratio);setWater(Math.round(dose*preset.ratio));timer.reset();};
   const updateDose=value=>{setDose(value);if(value>0)setWater(calculateRatio({mode:'water',dose:value,ratio}).water);};
   const updateWater=value=>{setWater(value);if(value>0)setRatio(Math.round(value/Math.max(Number(dose)||1,1)*10)/10);};
+  const recordBrew=()=>navigate(`/brews/new${beanId?`?beanId=${encodeURIComponent(beanId)}`:''}`,{state:{method:methodKey,doseGrams:dose,waterGrams:Math.round(dose*ratio),waterTempC:selected.temperature,grindSize:selected.grind,brewTimeSeconds:methodKey==='cold_brew'?'':timer.elapsed}});
   return <main><PageHeader title="Ruang seduh" eyebrow="RACIK DENGAN TENANG"/>
     <div className="segmented"><button className={section==='timer'?'active':''} onClick={()=>setSection('timer')}><TimerIcon size={16}/> Timer</button><button className={section==='calculator'?'active':''} onClick={()=>setSection('calculator')}><SlidersHorizontal size={16}/> Kalkulator</button></div>
+    {beanId&&(beanQuery.isError?<p className="timer-bean-error" role="alert">Data biji gagal dimuat. Kembali ke detail biji dan coba lagi.</p>:<div className="timer-bean-context"><BeanIcon size={16}/><span>MENYEDUH DENGAN <b>{beanQuery.data?.name||'Memuat biji...'}</b></span></div>)}
     {section==='calculator'?<section className="calculator-view">
       <Card className="calculator-card"><div className="eyebrow">KALKULATOR RASIO</div><h2>Temukan takaranmu.</h2><p>Atur dosis dan rasio untuk menghitung kebutuhan air.</p>
         <div className="field"><label htmlFor="calc-method">Preset metode</label><select id="calc-method" value={methodKey} onChange={event=>changeMethod(event.target.value)}>{methods.map(item=><option key={item.method} value={item.method}>{item.label} · 1:{item.ratio}</option>)}</select></div>
@@ -358,7 +366,7 @@ function TimerPage() {
       <BrewScene method={methodKey} stepIndex={timer.stepIndex} running={timer.running} finished={timer.finished} title={sceneTitle} caption={sceneCaption}/>
       <Card className="timer-step-card">{methodKey==='cold_brew'?<><div className="step-number"><Moon size={18}/></div><div><b>Seduh dingin 12–18 jam</b><p>Timer langkah tidak tersedia untuk cold brew.</p></div></>:<><div className="step-number">{timer.finished?<Check size={18}/>:String(Math.min(timer.stepIndex+1,Math.max(selected.steps.length,1))).padStart(2,'0')}</div><div className="step-copy"><small>{timer.finished?'SELESAI':'LANGKAH SAAT INI'}</small><b>{timer.finished?'Seduhan siap dinikmati':step?.name||'Stopwatch siap dimulai'}</b><p>{selected.steps.length?(step?`Tuang sampai ${targetWater} g · ${formatTime(step.end)}`:'Semua langkah selesai'):'Atur waktu seduhmu secara manual'}</p>{selected.steps[timer.stepIndex+1]&&<span>Selanjutnya: {selected.steps[timer.stepIndex+1].name}</span>}</div><button className="skip-step" aria-label="Lewati langkah" onClick={timer.skipStep} disabled={!selected.steps.length}><ChevronRight/></button></>}</Card>
       <div className="timer-dose-row"><label>Dosis <input type="number" min="1" value={dose} onChange={event=>updateDose(Number(event.target.value))}/> g</label><label>Rasio 1:<input type="number" min="1" value={ratio} onChange={event=>{setRatio(Number(event.target.value));setWater(Math.round(dose*Number(event.target.value)));}}/></label><span>Air total <b>{Math.round(dose*ratio)} g</b></span></div>
-      {timer.finished?<div className="timer-actions"><button className="button button-primary timer-main-action" onClick={()=>navigate('/brews/new',{state:{method:methodKey,doseGrams:dose,waterGrams:Math.round(dose*ratio),waterTempC:selected.temperature,brewTimeSeconds:timer.elapsed}})}><BookOpen size={18}/> Simpan sebagai seduhan</button><button className="timer-reset" aria-label="Reset timer" onClick={timer.reset}><RotateCcw size={19}/></button></div>:methodKey==='cold_brew'?<p className="timer-tip">Timer dinonaktifkan untuk metode cold brew.</p>:<div className="timer-actions">{!timer.running?<button className="button button-primary timer-main-action" onClick={timer.start}><Play size={18} fill="currentColor"/> {timer.elapsed?'Lanjut':'Mulai'}</button>:<button className="button button-primary timer-main-action" onClick={timer.pause}><Pause size={18} fill="currentColor"/> Jeda</button>}<button className="timer-reset" aria-label="Reset timer" onClick={timer.reset}><RotateCcw size={19}/></button>{timer.elapsed>0&&<button className="timer-reset" aria-label="Lewati langkah" onClick={timer.skipStep}><ChevronRight size={19}/></button>}</div>}
+      {timer.finished?<div className="timer-actions"><button className="button button-primary timer-main-action" onClick={recordBrew}><BookOpen size={18}/> Catat hasil seduhan</button><button className="timer-reset" aria-label="Reset timer" onClick={timer.reset}><RotateCcw size={19}/></button></div>:methodKey==='cold_brew'?<><p className="timer-tip">Rendam 12–18 jam, lalu catat hasilnya.</p><button className="button button-primary timer-main-action" onClick={recordBrew}><BookOpen size={18}/> Sudah selesai direndam? Catat hasil</button></>:<div className="timer-actions">{!timer.running?<button className="button button-primary timer-main-action" onClick={timer.start}><Play size={18} fill="currentColor"/> {timer.elapsed?'Lanjut':'Mulai'}</button>:<button className="button button-primary timer-main-action" onClick={timer.pause}><Pause size={18} fill="currentColor"/> Jeda</button>}<button className="timer-reset" aria-label="Reset timer" onClick={timer.reset}><RotateCcw size={19}/></button>{timer.elapsed>0&&<button className="timer-reset" aria-label="Lewati langkah" onClick={timer.skipStep}><ChevronRight size={19}/></button>}</div>}
       <p className="timer-tip"><Clock3 size={15}/> Timer tetap akurat saat kamu berpindah aplikasi.</p>
     </section>}
   </main>;
@@ -371,19 +379,29 @@ function BrewScene({method,stepIndex,running,finished,title,caption}) {
     <svg className={`scene-art scene-art-${method}`} viewBox="0 0 260 170" role="img" aria-label={`${methodLabel(method)}: ${title}`} preserveAspectRatio="xMidYMid meet">
       <ellipse className="scene-glow" cx="130" cy="159" rx="108" ry="9"/>
       <path className="scene-table" d="M18 162h224" />
-      {method==='v60'&&<g className="scene-v60" transform="translate(20 8) scale(1.35)">
-        <path className="scene-server" d="M111 83h47l-4 18c-2 9-9 14-20 14s-18-5-20-14z"/><path className="scene-server-handle" d="M157 88h8c10 0 10 18 0 18h-10"/>
-        <path className="scene-server-coffee" d="M115 98h39l-2 9c-10 7-25 7-35 0z"/>
-        <path className="scene-vessel" d="M28 34h37c7 0 11 5 10 11l-4 24H24l-4-24c-1-6 2-11 8-11z"/>
-        <path className="scene-handle" d="M70 41h8c11 0 11 19 0 19h-9"/><path className="scene-spout" d="m29 41-18 12 13 5"/><path className="scene-lid" d="M32 29h30"/>
-        <path className="scene-stream" d="M83 56c15 2 20 7 28 15"/>
-        <path className="scene-filter" d="m102 64 13 34h42l13-34z"/>
-        <path className="scene-ridge" d="m110 67 11 28m1-29 6 29m9-29 1 29m10-29-4 29m13-29-9 29"/>
-        <path className="scene-coffee" d="M109 82h42l-4 14h-34z"/>
-        <path className="scene-bloom-surface" d="M111 83c8-7 12 5 20-1s12 5 19 0"/>
-        <path className="scene-dripper-rim" d="M98 64h78"/><path className="scene-dripper-base" d="M112 98h44"/>
-        <g className="scene-bubbles"><circle cx="119" cy="79" r="3"/><circle cx="134" cy="75" r="2.5"/><circle cx="145" cy="80" r="2"/></g>
-        <path className="scene-server-rim" d="M108 83h54"/>
+      {method==='v60'&&<g className="scene-v60">
+        <path className="scene-server" d="M137 103h54l2 15c1 8 18 18 19 29 1 10-21 14-48 14s-49-4-48-14c1-11 18-21 19-29z"/>
+        <path className="scene-server-handle" d="M192 116c17-8 31 1 30 15-1 11-10 18-22 16"/>
+        <path className="scene-server-coffee" d="M120 145c24 9 64 9 88 0 4 7 4 12-1 15-22 9-64 9-86 0-5-3-5-8-1-15z"/>
+        <path className="scene-server-rim" d="M129 103h70"/>
+        <g transform="translate(29.25 0) scale(.82 1)">
+          <path className="scene-v60-base" d="M119 91h91v11c-8 7-20 9-45 9s-38-2-46-9z"/>
+          <path className="scene-glass-dripper" d="M104 43c0-11 117-11 117 0l-30 49c-12 8-45 8-57 0z"/>
+          <path className="scene-ridge" d="m108 45 30 45m-19-47 28 47m-14-49 20 49m-6-49 11 49m9-49-2 49m15-48-10 47m23-45-18 44"/>
+          <path className="scene-filter" d="M111 44c0-8 103-8 103 0l-27 42c-9 6-40 6-49 0z"/>
+          <path className="scene-coffee" d="M133 69c13-5 34-5 47 0l-8 15c-8 4-23 4-31 0z"/>
+          <path className="scene-bloom-surface" d="M135 71c6-6 10 4 16-1s10 4 15-1 9 4 12 1"/>
+          <path className="scene-filter-rim" d="M111 44c0-8 103-8 103 0"/>
+          <path className="scene-dripper-rim" d="M102 43c0-13 121-13 121 0s-121 13-121 0z"/>
+          <path className="scene-dripper-base" d="M132 94c10 7 44 7 54 0"/>
+        </g>
+        <path className="scene-kettle-body" d="M20 68c0-13 10-22 26-22s26 9 26 22l-5 25H25z"/>
+        <path className="scene-kettle-handle" d="M66 58c22-2 22 29 0 29"/>
+        <path className="scene-kettle-spout" d="M64 57c13-2 16-12 26-15 7-2 11 3 6 8-7 7-14 12-25 16"/>
+        <path className="scene-kettle-lid" d="M34 44v-5h23v5m-15-5v-4h7v4"/>
+        <path className="scene-stream" d="M97 46c17 3 27 14 43 21 6 3 11 4 17 5"/>
+        <path className="scene-drip" d="M163 105v23"/>
+        <g className="scene-bubbles"><circle cx="139" cy="68" r="3"/><circle cx="156" cy="66" r="2.5"/><circle cx="174" cy="70" r="2"/></g>
       </g>}
       {(method==='french_press'||method==='aeropress')&&<g className="scene-press" transform="translate(0 9) scale(1.45)">
         <path className="scene-press-glass" d="M76 37h67l-5 52H82z"/><path className="scene-coffee" d="M80 66h59l-3 21H83z"/>
@@ -438,18 +456,8 @@ function AboutPage() {
 }
 
 function SettingsPage() {
-  const {toast,install,installPrompt,online}=useOutletContext();
+  const {toast,install,installPrompt,online,theme,setTheme}=useOutletContext();
   const queryClient=useQueryClient();
-  const [theme,setTheme]=useState(localStorage.getItem('seduhlog-theme')||'system');
-  useEffect(()=>{
-    const root=document.documentElement;
-    const media=window.matchMedia('(prefers-color-scheme: dark)');
-    const applyTheme=()=>{root.dataset.theme=theme==='system'?(media.matches?'dark':'light'):theme;};
-    applyTheme();
-    localStorage.setItem('seduhlog-theme',theme);
-    media.addEventListener?.('change',applyTheme);
-    return()=>media.removeEventListener?.('change',applyTheme);
-  },[theme]);
   return <main><PageHeader title="Pengaturan aplikasi" back eyebrow="SESUAIKAN PENGALAMAN"/>
     <Card className="settings-card settings-page-card"><div className="section-title"><div><div className="eyebrow">PREFERENSI</div><h2>Tampilan & perangkat</h2></div><Settings size={19}/></div>
       <div className="setting-item"><div><b>Tampilan</b><small>Sesuaikan suasana aplikasi</small></div><select aria-label="Tema tampilan" value={theme} onChange={event=>setTheme(event.target.value)}><option value="light">Terang</option><option value="dark">Gelap</option><option value="system">Ikuti sistem</option></select></div>
@@ -469,13 +477,23 @@ function NotFound() {
   return <main className="not-found"><div className="empty-art"><Coffee size={40}/></div><div className="eyebrow">404 · HALAMAN TIDAK DITEMUKAN</div><h1>Sepertinya terlalu jauh dari cangkir.</h1><p>Halaman yang kamu cari tidak ada atau sudah berpindah.</p><Link className="button button-primary" to="/">Kembali ke beranda <ArrowRight size={17}/></Link></main>;
 }
 
-function RouterApp({toast,setToast}) {
-  return <BrowserRouter><Routes><Route element={<AppLayout toast={toast} setToast={setToast}/>}><Route path="/" element={<AppHome/>}/><Route path="/brews" element={<BrewList/>}/><Route path="/beans" element={<BeanList/>}/><Route path="/timer" element={<TimerPage/>}/><Route path="/profile" element={<ProfilePage/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="/brews/new" element={<BrewForm/>}/><Route path="/brews/:id/edit" element={<BrewForm/>}/><Route path="/brews/:id" element={<BrewDetail/>}/><Route path="/beans/new" element={<BeanForm/>}/><Route path="/beans/:id/edit" element={<BeanForm/>}/><Route path="/beans/:id" element={<BeanDetail/>}/><Route path="*" element={<NotFound/>}/></Route></Routes></BrowserRouter>;
+function RouterApp({toast,setToast,theme,setTheme}) {
+  return <BrowserRouter><Routes><Route element={<AppLayout toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>}><Route path="/" element={<AppHome/>}/><Route path="/brews" element={<BrewList/>}/><Route path="/beans" element={<BeanList/>}/><Route path="/timer" element={<TimerPage/>}/><Route path="/profile" element={<ProfilePage/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="/brews/new" element={<BrewForm/>}/><Route path="/brews/:id/edit" element={<BrewForm/>}/><Route path="/brews/:id" element={<BrewDetail/>}/><Route path="/beans/new" element={<BeanForm/>}/><Route path="/beans/:id/edit" element={<BeanForm/>}/><Route path="/beans/:id" element={<BeanDetail/>}/><Route path="*" element={<NotFound/>}/></Route></Routes></BrowserRouter>;
 }
 
 export default function App() {
   const [toast,setToast]=useState({message:'',type:'success'});
+  const [theme,setTheme]=useState(()=>localStorage.getItem('seduhlog-theme')||'system');
+  useLayoutEffect(()=>{
+    const root=document.documentElement;
+    const media=window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme=()=>{root.dataset.theme=theme==='system'?(media.matches?'dark':'light'):theme;};
+    applyTheme();
+    localStorage.setItem('seduhlog-theme',theme);
+    media.addEventListener?.('change',applyTheme);
+    return()=>media.removeEventListener?.('change',applyTheme);
+  },[theme]);
   useEffect(()=>{if(!toast.message)return undefined;const timeout=setTimeout(()=>setToast({message:'',type:'success'}),3500);return()=>clearTimeout(timeout);},[toast]);
-  return <RouterApp toast={toast} setToast={setToast}/>;
+  return <RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>;
 }
 
