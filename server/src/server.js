@@ -1,15 +1,12 @@
 import 'dotenv/config';
 import app from './app.js';
-import { connectDatabase } from './config/database.js';
-import { configureDnsResolver } from './config/dns.js';
-
-configureDnsResolver();
+import { initializeDatabase } from './db/pool.js';
 
 const port = process.env.PORT || 5000;
 try {
-  await connectDatabase(process.env.MONGODB_URI);
+  await initializeDatabase();
   app.listen(port, () => process.stdout.write(`SeduhLog API berjalan pada port ${port}\n`));
 } catch (error) {
-  console.error(`Gagal menghubungkan database: ${error.message}`);
+  console.error(`Gagal menyiapkan PostgreSQL: ${error.message}`);
   process.exit(1);
 }

@@ -6,10 +6,8 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import api from './routes/api.js';
 import { errorHandler, notFound } from './middleware/errors.js';
-import { connectDatabase } from './config/database.js';
-import { configureDnsResolver } from './config/dns.js';
+import { initializeDatabase } from './db/pool.js';
 
-configureDnsResolver();
 const app = express();
 app.set('trust proxy', 1);
 const origins = (process.env.CLIENT_ORIGIN || '').split(',').map(value => value.trim()).filter(Boolean);
@@ -27,7 +25,7 @@ app.use('/api', rateLimit({
 app.use('/api', async (req, res, next) => {
   if (req.path === '/health' || req.path === '/methods') return next();
   try {
-    await connectDatabase(process.env.MONGODB_URI);
+    await initializeDatabase();
     next();
   } catch (error) {
     next(error);

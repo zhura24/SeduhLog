@@ -10,7 +10,7 @@ SeduhLog adalah aplikasi jurnal personal untuk menyimpan resep seduh kopi, profi
 - Ilustrasi animasi pada timer yang berubah mengikuti metode seduh dan langkah aktif, termasuk efek menuang, blooming, pengepresan, dan ekstraksi.
 - Kalkulator rasio kopi/air, tema terang/gelap/sistem, status online/offline, dan dukungan instalasi PWA.
 - Tab Profil berisi identitas pengembang; informasi aplikasi dan pengaturan tersedia sebagai halaman terpisah dari Profil.
-- API REST Express + MongoDB/Mongoose, validasi Zod, dan skrip data contoh.
+- API REST Express + Supabase PostgreSQL, validasi Zod, dan skrip data contoh.
 
 ## Tangkapan layar
 
@@ -19,17 +19,16 @@ Tambahkan tangkapan layar Beranda, Seduhan, Biji, Timer, dan Profil di sini sebe
 ## Arsitektur
 
 - `client/`: React 18, Vite, React Router, TanStack Query, Tailwind CSS, dan Workbox PWA.
-- `server/`: Express 4 REST API, Mongoose, MongoDB Atlas, Zod, dan Vitest/Supertest.
-- Data bersifat personal/tanpa login. Server membutuhkan MongoDB untuk penyimpanan persisten.
+- `server/`: Express 4 REST API, PostgreSQL, Zod, dan Vitest/Supertest.
+- Data bersifat personal/tanpa login. Server membutuhkan Supabase PostgreSQL untuk penyimpanan persisten.
 
 ## Menjalankan lokal
 
 Prasyarat: Node.js 20+ dan npm.
 
-1. Siapkan MongoDB Atlas M0: buat akun dan cluster gratis, buat database user, lalu di Network Access tambahkan IP yang digunakan. Untuk praktik lokal mudah, Atlas menyediakan opsi `0.0.0.0/0`; batasi ke IP tertentu bila memungkinkan.
-2. Salin `server/.env.example` menjadi `server/.env`, isi `MONGODB_URI` dengan connection string Atlas termasuk nama database `seduhlog`. Jangan unggah `.env`.
-3. Isi `CLIENT_ORIGIN=http://localhost:5173` dan `NODE_ENV=development` pada `server/.env`.
-   Jika Node.js gagal mencari record DNS SRV Atlas (`querySrv ECONNREFUSED`), tambahkan `MONGODB_DNS_SERVERS=1.1.1.1,1.0.0.1` agar backend dan skrip seed memakai resolver DNS tersebut.
+1. Buat project di Supabase. Buka **Project Settings → Database → Connection string → Transaction pooler**, pilih URI, lalu salin connection string. Transaction pooler direkomendasikan untuk backend serverless. Ganti placeholder password di URI secara lokal; jangan kirim atau commit password.
+2. Salin `server/.env.example` menjadi `server/.env`, lalu isi `DATABASE_URL` dengan connection string Supabase. Jangan unggah `.env`.
+3. Isi `CLIENT_ORIGIN=http://localhost:5173` dan `NODE_ENV=development` pada `server/.env`. Tabel dan indeks dibuat otomatis saat API pertama kali dijalankan.
 4. Salin `client/.env.example` menjadi `client/.env`. Untuk lokal, gunakan `VITE_API_BASE_URL=http://localhost:5000/api`.
 5. Dari root project jalankan `npm install`, `npm install --prefix server`, dan `npm install --prefix client`.
 6. Untuk data demonstrasi, jalankan `npm run seed --prefix server`.
@@ -44,11 +43,11 @@ Semua endpoint memakai prefix `/api`: `GET /health`, `GET /methods`, CRUD `/bean
 
 Urutan deployment:
 
-1. Buat cluster MongoDB Atlas M0, database user, dan akses jaringan yang sesuai. Simpan connection string di tempat aman.
-2. Buat Web Service Render dari repo ini dengan konfigurasi `render.yaml`. Isi `MONGODB_URI` pada environment Render. Setelah URL frontend Vercel tersedia, isi `CLIENT_ORIGIN` dengan origin frontend tersebut (tanpa path). Health check ada di `/api/health`.
-3. Buat project Vercel dengan Root Directory `client`. SPA rewrite sudah disiapkan di `client/vercel.json`. Isi `VITE_API_BASE_URL` dengan URL Render, misalnya `https://seduhlog-api.onrender.com/api`, lalu deploy ulang.
-4. Kembali ke Render dan atur `CLIENT_ORIGIN` menjadi URL Vercel persis, misalnya `https://nama-project.vercel.app`, kemudian deploy ulang backend.
-5. MongoDB Atlas free tier dapat dipakai sebagai database. Aplikasi free tier Render dapat tidur saat idle sehingga cold start API mungkin memerlukan waktu.
+1. Buat project Supabase dan ambil URI **Transaction pooler** dari **Project Settings → Database → Connection string**. Simpan password database dengan aman.
+2. Push perubahan aplikasi ke GitHub. Vercel akan membangun ulang project backend dari repository.
+3. Pada project backend Vercel (`seduh-log.vercel.app`), tambahkan `DATABASE_URL` dari Supabase di **Settings → Environment Variables** untuk Production, lalu deploy ulang. Pastikan `CLIENT_ORIGIN` berisi origin frontend Vercel tanpa path.
+4. Pada project frontend Vercel, pastikan `VITE_API_BASE_URL` mengarah ke backend, misalnya `https://seduh-log.vercel.app/api`, lalu deploy ulang jika nilainya berubah.
+5. Setelah deployment selesai, periksa `https://seduh-log.vercel.app/api/health` dan buka aplikasi. Supabase Free dapat memiliki batas penggunaan dan dapat pause saat lama tidak aktif.
 
 ## Memasang aplikasi
 
@@ -59,7 +58,7 @@ Urutan deployment:
 ## Keputusan Desain
 
 - Pengguna tunggal tanpa autentikasi sesuai cakupan TA; API tidak menyediakan pemisahan data antar pengguna.
-- MongoDB Atlas digunakan untuk penyimpanan persistensi dan seed berisi 6 biji serta 15 seduhan contoh.
+- Supabase PostgreSQL digunakan untuk penyimpanan persistensi. Skrip seed menambahkan 6 biji dan 15 seduhan contoh hanya ketika database kosong; seed tidak menghapus data pengguna.
 - Antarmuka menggunakan bahasa Indonesia dan dirancang mobile-first dengan navigasi lima tab.
 - Data identitas pada `client/src/config/profile.js` mengikuti informasi dalam spesifikasi; periksa kembali nama, NIM, prodi, universitas, dan tautan GitHub sebelum publikasi.
 - Timer menyimpan timestamp saat berjalan, bukan menambahkan durasi berdasarkan jumlah interval, agar tetap akurat saat tab tidak aktif.

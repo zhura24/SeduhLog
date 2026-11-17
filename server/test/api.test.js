@@ -1,18 +1,37 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { DataType, newDb } from 'pg-mem';
 import request from 'supertest';
 import app from '../src/app.js';
-import Bean from '../src/models/Bean.js';
-import Brew from '../src/models/Brew.js';
+import { closePool, getPool, initializeDatabase, setPoolForTests } from '../src/db/pool.js';
 
-let mongo;
+let memoryPool;
 beforeAll(async () => {
-  mongo = await MongoMemoryServer.create();
-  await mongoose.connect(mongo.getUri());
+  const db = newDb();
+  db.public.registerFunction({
+    name: 'char_length',
+    args: [DataType.text],
+    returns: DataType.integer,
+    implementation: value => value.length
+  });
+  const { Pool } = db.adapters.createPg();
+  memoryPool = new Pool();
+  setPoolForTests(memoryPool);
+  await initializeDatabase();
 });
-beforeEach(async () => { await Brew.deleteMany({}); await Bean.deleteMany({}); });
-afterAll(async () => { await mongoose.disconnect(); await mongo.stop(); });
+beforeEach(async () => {
+  await getPool().query('DELETE FROM brews');
+  await getPool().query('DELETE FROM beans');
+});
+afterAll(async () => { await closePool(); });
+
+async function addBean() {
+  const { rows } = await getPool().query(
+    `INSERT INTO beans (id, name, origin) VALUES ($1, 'Kopi Gayo', 'Aceh') RETURNING id`,
+    [randomUUID()]
+  );
+  return rows[0].id;
+}
 
 describe('SeduhLog API', () => {
   it('melayani health check', async () => {
@@ -31,35 +50,46 @@ describe('SeduhLog API', () => {
     await request(app).post('/api/beans').send({ name: 'x', origin: '' }).expect(400);
   });
   it('mencegah penghapusan biji yang masih digunakan', async () => {
-    const bean = await Bean.create({ name: 'Kopi Gayo', origin: 'Aceh' });
-    await Brew.create({ bean: bean._id, method: 'v60', doseGrams: 15, waterGrams: 240, rating: 4 });
-    const result = await request(app).delete(`/api/beans/${bean.id}`).expect(409);
+    const bean = await addBean();
+    await request(app).post('/api/brews').send({ bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4 }).expect(201);
+    const result = await request(app).delete(`/api/beans/${bean}`).expect(409);
     expect(result.body.message).toMatch(/masih dipakai 1 seduhan/);
   });
   it('membuat, menampilkan, dan mengganti status favorit seduhan', async () => {
-    const bean = await Bean.create({ name: 'Kopi Gayo', origin: 'Aceh' });
+    const bean = await addBean();
     const created = await request(app).post('/api/brews').send({
-      bean: bean.id, method: 'v60', doseGrams: 15, waterGrams: 240, rating: 5, cupping: { aroma: 8, flavor: 9 }
+      bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 5, cupping: { aroma: 8, flavor: 9 }
     }).expect(201);
     expect(created.body.data.ratio).toBe(16);
     expect(created.body.data.cuppingAverage).toBe(8.5);
     expect(created.body.data.bean.name).toBe('Kopi Gayo');
+    const beanDetail = (await request(app).get(`/api/beans/${bean}`).expect(200)).body.data;
+    expect(beanDetail.brewCount).toBe(1);
+    expect(beanDetail.avgRating).toBe(5);
+    expect((await request(app).get('/api/beans').expect(200)).body.data[0].brewCount).toBe(1);
     const updated = await request(app).patch(`/api/brews/${created.body.data.id}/favorite`).expect(200);
     expect(updated.body.data.isFavorite).toBe(true);
     expect((await request(app).get(`/api/brews/${created.body.data.id}`)).body.data.bean.origin).toBe('Aceh');
+    const listed = await request(app).get('/api/brews').query({ beanId: bean, favorite: 'true' }).expect(200);
+    expect(listed.body.meta.total).toBe(1);
+    expect(listed.body.data[0].bean.name).toBe('Kopi Gayo');
+    const stats = (await request(app).get('/api/stats').expect(200)).body.data;
+    expect(stats.totalBrews).toBe(1);
+    expect(stats.topBean.count).toBe(1);
+    expect(stats.methodBreakdown[0].count).toBe(1);
     await request(app).put(`/api/brews/${created.body.data.id}`).send({ rating: 4 }).expect(200);
     expect((await request(app).get(`/api/brews/${created.body.data.id}`)).body.data.rating).toBe(4);
     await request(app).delete(`/api/brews/${created.body.data.id}`).expect(200);
   });
   it('menolak cupping score di luar rentang', async () => {
-    const bean = await Bean.create({ name: 'Kopi Gayo', origin: 'Aceh' });
+    const bean = await addBean();
     await request(app).post('/api/brews').send({
-      bean: bean.id, method: 'v60', doseGrams: 15, waterGrams: 240, rating: 4, cupping: { aroma: 11 }
+      bean, method: 'v60', doseGrams: 15, waterGrams: 240, rating: 4, cupping: { aroma: 11 }
     }).expect(400);
   });
   it('menyediakan statistik dan 404 untuk data yang tidak ada', async () => {
     expect((await request(app).get('/api/stats')).body.data.totalBrews).toBe(0);
-    await request(app).get(`/api/beans/${new mongoose.Types.ObjectId()}`).expect(404);
+    await request(app).get(`/api/beans/${randomUUID()}`).expect(404);
   });
   it('menolak format ID yang tidak valid', async () => {
     await request(app).get('/api/brews/nope').expect(400);

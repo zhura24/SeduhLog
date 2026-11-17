@@ -449,7 +449,7 @@ function ProfilePage() {
 
 function AboutPage() {
   return <main><PageHeader title="Tentang aplikasi" back eyebrow="RUANG KECIL UNTUK RASA"/>
-    <Card className="about-card about-page-card"><div className="about-icon"><Coffee/></div><div className="eyebrow">TUGAS AKHIR PRAKTIKUM</div><h2>SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi</h2><p>Jurnal personal untuk merekam setiap seduhan, mengelola biji kopi, dan memahami rasa di setiap cangkir.</p><div className="version-pill">Versi {__APP_VERSION__}</div><div className="tech-stack"><Badge>React</Badge><Badge>Express API</Badge><Badge>MongoDB</Badge><Badge>PWA</Badge></div></Card>
+    <Card className="about-card about-page-card"><div className="about-icon"><Coffee/></div><div className="eyebrow">TUGAS AKHIR PRAKTIKUM</div><h2>SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi</h2><p>Jurnal personal untuk merekam setiap seduhan, mengelola biji kopi, dan memahami rasa di setiap cangkir.</p><div className="version-pill">Versi {__APP_VERSION__}</div><div className="tech-stack"><Badge>React</Badge><Badge>Express API</Badge><Badge>Supabase PostgreSQL</Badge><Badge>PWA</Badge></div></Card>
     <Card className="about-extra"><div className="eyebrow">DIBUAT UNTUK</div><p>Praktikum Pemrograman Perangkat Bergerak</p><p>SeduhLog membantu menyimpan resep, catatan sensori, dan koleksi biji kopi dalam satu jurnal pribadi.</p></Card>
     <a className="repo-link" href={profile.repository} target="_blank" rel="noreferrer"><Share size={16}/> Repo aplikasi di GitHub <ArrowRight size={15}/></a>
   </main>;
@@ -465,7 +465,7 @@ function SettingsPage() {
       <div className="setting-item"><div><b>Pasang aplikasi</b><small>Tambahkan ke layar utama</small></div><button className="button button-small button-outline" onClick={install}>{installPrompt?'Pasang':'Petunjuk'} <Upload size={15}/></button></div>
       <div className="setting-item"><div><b>Bersihkan cache data</b><small>Hapus salinan data yang tersimpan</small></div><button className="button button-small button-outline" onClick={()=>{queryClient.clear();toast('Cache data berhasil dibersihkan');}}>Bersihkan</button></div>
     </Card>
-    <p className="profile-note">Penghapusan cache mengosongkan data lokal yang tersimpan; data di MongoDB tidak dihapus.</p>
+    <p className="profile-note">Penghapusan cache mengosongkan data lokal yang tersimpan; data di Supabase tidak dihapus.</p>
   </main>;
 }
 

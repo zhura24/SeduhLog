@@ -1,115 +1,277 @@
+import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
-import mongoose from 'mongoose';
-import Bean from '../models/Bean.js';
-import Brew from '../models/Brew.js';
+import { getPool } from '../db/pool.js';
 import { asyncHandler, badRequest, response } from '../middleware/errors.js';
 import { getHealth, getMethods } from '../controllers/meta.js';
 import { beanSchema, brewSchema } from '../validators/api.js';
 
 const router = Router();
 const parse = (schema, input) => schema.parse(input);
-const escapeRegex = value => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const checkId = id => { if (!mongoose.isValidObjectId(id)) throw badRequest('Format ID tidak valid'); };
-const findOr404 = async (Model, id) => {
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const checkId = id => { if (!uuidPattern.test(String(id))) throw badRequest('Format ID tidak valid'); };
+const findOr404 = async (table, id) => {
   checkId(id);
-  const item = await Model.findById(id);
-  if (!item) throw Object.assign(new Error('Data tidak ditemukan'), { status: 404 });
-  return item;
+  const { rows } = await getPool().query(`SELECT * FROM ${table} WHERE id = $1`, [id]);
+  if (!rows[0]) throw Object.assign(new Error('Data tidak ditemukan'), { status: 404 });
+  return rows[0];
 };
 const pageParams = query => ({ page: Math.max(1, Number(query.page) || 1), limit: Math.min(50, Math.max(1, Number(query.limit) || 10)) });
+const beanFromRow = row => ({
+  id: row.id,
+  name: row.name,
+  origin: row.origin,
+  roaster: row.roaster,
+  process: row.process,
+  roastLevel: row.roast_level,
+  variety: row.variety,
+  altitudeMasl: row.altitude_masl === null ? null : Number(row.altitude_masl),
+  roastDate: row.roast_date,
+  flavorNotes: row.flavor_notes || [],
+  imageUrl: row.image_url,
+  notes: row.notes,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at
+});
+const brewFromRow = (row, bean = null) => {
+  const result = {
+    id: row.id,
+    bean: bean || row.bean_id,
+    method: row.method,
+    doseGrams: Number(row.dose_grams),
+    waterGrams: Number(row.water_grams),
+    waterTempC: row.water_temp_c === null ? null : Number(row.water_temp_c),
+    grindSize: row.grind_size,
+    grinderSetting: row.grinder_setting,
+    brewTimeSeconds: row.brew_time_seconds === null ? null : Number(row.brew_time_seconds),
+    tdsPercent: row.tds_percent === null ? null : Number(row.tds_percent),
+    rating: row.rating,
+    cupping: row.cupping || {},
+    tasteTags: row.taste_tags || [],
+    notes: row.notes,
+    isFavorite: row.is_favorite,
+    brewedAt: row.brewed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+  result.ratio = Math.round((result.waterGrams / result.doseGrams) * 10) / 10;
+  const scores = ['aroma', 'flavor', 'acidity', 'body', 'sweetness', 'aftertaste', 'balance']
+    .map(key => Number(result.cupping[key]))
+    .filter(value => Number.isInteger(value) && value >= 1 && value <= 10);
+  result.cuppingAverage = scores.length ? Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length * 10) / 10 : null;
+  return result;
+};
+const joinedBean = row => row.bean_id ? {
+  id: row.bean_id,
+  name: row.bean_name,
+  origin: row.bean_origin
+} : null;
+const brewSelect = `SELECT r.*, b.name AS bean_name, b.origin AS bean_origin FROM brews r JOIN beans b ON b.id = r.bean_id`;
 
 router.get('/health', getHealth);
 router.get('/methods', getMethods);
 
 router.get('/beans', asyncHandler(async (req, res) => {
   const { page, limit } = pageParams(req.query);
-  const filter = {};
-  if (req.query.q) filter.$or = ['name', 'origin', 'roaster'].map(key => ({ [key]: { $regex: escapeRegex(req.query.q), $options: 'i' } }));
-  if (req.query.process) filter.process = req.query.process;
-  if (req.query.roastLevel) filter.roastLevel = req.query.roastLevel;
-  const sort = req.query.sort === 'name' ? { name: 1 } : { createdAt: -1 };
-  const [items, total] = await Promise.all([Bean.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).lean(), Bean.countDocuments(filter)]);
-  const counts = await Brew.aggregate([{ $match: { bean: { $in: items.map(item => item._id) } } }, { $group: { _id: '$bean', count: { $sum: 1 } } }]);
-  const countMap = new Map(counts.map(item => [String(item._id), item.count]));
-  response(res, items.map(item => ({ ...item, id: String(item._id), _id: undefined, __v: undefined, brewCount: countMap.get(String(item._id)) || 0 })), 'Berhasil', { page, limit, total, totalPages: Math.ceil(total / limit) });
-}));
-router.post('/beans', asyncHandler(async (req, res) => response(res, await Bean.create(parse(beanSchema, req.body)), 'Biji berhasil ditambahkan', undefined, 201)));
-router.get('/beans/:id', asyncHandler(async (req, res) => {
-  const bean = await findOr404(Bean, req.params.id);
-  const [brewCount, average, recentBrews] = await Promise.all([
-    Brew.countDocuments({ bean: bean._id }),
-    Brew.aggregate([{ $match: { bean: bean._id } }, { $group: { _id: null, value: { $avg: '$rating' } } }]),
-    Brew.find({ bean: bean._id }).sort({ brewedAt: -1 }).limit(5).populate('bean', 'name origin')
+  const clauses = [];
+  const values = [];
+  if (req.query.q) {
+    values.push(`%${String(req.query.q).replace(/[\\%_]/g, '\\$&')}%`);
+    clauses.push(`(name ILIKE $${values.length} ESCAPE '\\' OR origin ILIKE $${values.length} ESCAPE '\\' OR roaster ILIKE $${values.length} ESCAPE '\\')`);
+  }
+  if (req.query.process) { values.push(req.query.process); clauses.push(`process = $${values.length}`); }
+  if (req.query.roastLevel) { values.push(req.query.roastLevel); clauses.push(`roast_level = $${values.length}`); }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const sort = req.query.sort === 'name' ? 'name ASC' : 'created_at DESC';
+  const [items, count, brewCounts] = await Promise.all([
+    getPool().query(`SELECT * FROM beans ${where} ORDER BY ${sort} LIMIT $${values.length + 1} OFFSET $${values.length + 2}`, [...values, limit, (page - 1) * limit]),
+    getPool().query(`SELECT COUNT(*)::int AS total FROM beans ${where}`, values),
+    getPool().query('SELECT bean_id, COUNT(*)::int AS count FROM brews GROUP BY bean_id')
   ]);
-  response(res, { ...bean.toJSON(), brewCount, avgRating: average.length ? Math.round(average[0].value * 10) / 10 : null, recentBrews });
+  const countsByBean = new Map(brewCounts.rows.map(item => [item.bean_id, Number(item.count)]));
+  response(res, items.rows.map(item => ({ ...beanFromRow(item), brewCount: countsByBean.get(item.id) || 0 })), 'Berhasil', {
+    page, limit, total: count.rows[0].total, totalPages: Math.ceil(count.rows[0].total / limit)
+  });
 }));
+
+router.post('/beans', asyncHandler(async (req, res) => {
+  const data = parse(beanSchema, req.body);
+  const { rows } = await getPool().query(
+    `INSERT INTO beans (id, name, origin, roaster, process, roast_level, variety, altitude_masl, roast_date, flavor_notes, image_url, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+    [randomUUID(), data.name, data.origin, data.roaster || null, data.process || 'washed', data.roastLevel || 'medium',
+      data.variety || null, data.altitudeMasl ?? null, data.roastDate ?? null, data.flavorNotes || [], data.imageUrl || null, data.notes || null]
+  );
+  response(res, beanFromRow(rows[0]), 'Biji berhasil ditambahkan', undefined, 201);
+}));
+
+router.get('/beans/:id', asyncHandler(async (req, res) => {
+  const bean = beanFromRow(await findOr404('beans', req.params.id));
+  const [count, average, recent] = await Promise.all([
+    getPool().query('SELECT COUNT(*)::int AS count FROM brews WHERE bean_id = $1', [bean.id]),
+    getPool().query('SELECT AVG(rating)::float AS value FROM brews WHERE bean_id = $1', [bean.id]),
+    getPool().query(`${brewSelect} WHERE r.bean_id = $1 ORDER BY r.brewed_at DESC LIMIT 5`, [bean.id])
+  ]);
+  response(res, {
+    ...bean,
+    brewCount: count.rows[0].count,
+    avgRating: average.rows[0].value === null ? null : Math.round(average.rows[0].value * 10) / 10,
+    recentBrews: recent.rows.map(row => brewFromRow(row, joinedBean(row)))
+  });
+}));
+
 router.put('/beans/:id', asyncHandler(async (req, res) => {
-  const bean = await findOr404(Bean, req.params.id);
-  bean.set(parse(beanSchema.partial(), req.body));
-  await bean.save();
-  response(res, bean, 'Biji berhasil diperbarui');
+  await findOr404('beans', req.params.id);
+  const data = parse(beanSchema.partial(), req.body);
+  const columns = { name: 'name', origin: 'origin', roaster: 'roaster', process: 'process', roastLevel: 'roast_level',
+    variety: 'variety', altitudeMasl: 'altitude_masl', roastDate: 'roast_date', flavorNotes: 'flavor_notes', imageUrl: 'image_url', notes: 'notes' };
+  const entries = Object.entries(data).filter(([, value]) => value !== undefined);
+  if (!entries.length) return response(res, beanFromRow(await findOr404('beans', req.params.id)), 'Biji berhasil diperbarui');
+  const values = entries.map(([, value]) => value);
+  const set = entries.map(([key], index) => `${columns[key]} = $${index + 1}`);
+  values.push(req.params.id);
+  const { rows } = await getPool().query(`UPDATE beans SET ${set.join(', ')}, updated_at = now() WHERE id = $${values.length} RETURNING *`, values);
+  response(res, beanFromRow(rows[0]), 'Biji berhasil diperbarui');
 }));
+
 router.delete('/beans/:id', asyncHandler(async (req, res) => {
-  const bean = await findOr404(Bean, req.params.id);
-  const count = await Brew.countDocuments({ bean: bean._id });
-  if (count) throw Object.assign(new Error(`Biji ini masih dipakai ${count} seduhan`), { status: 409 });
-  await bean.deleteOne();
+  await findOr404('beans', req.params.id);
+  const count = await getPool().query('SELECT COUNT(*)::int AS count FROM brews WHERE bean_id = $1', [req.params.id]);
+  if (count.rows[0].count) throw Object.assign(new Error(`Biji ini masih dipakai ${count.rows[0].count} seduhan`), { status: 409 });
+  await getPool().query('DELETE FROM beans WHERE id = $1', [req.params.id]);
   response(res, null, 'Biji berhasil dihapus');
 }));
 
 router.get('/brews', asyncHandler(async (req, res) => {
   const { page, limit } = pageParams(req.query);
-  const filter = {};
-  if (req.query.method) filter.method = req.query.method;
-  if (req.query.beanId) { checkId(req.query.beanId); filter.bean = req.query.beanId; }
-  if (req.query.minRating) filter.rating = { $gte: Number(req.query.minRating) };
-  if (req.query.favorite === 'true') filter.isFavorite = true;
-  if (req.query.q) filter.$or = [{ notes: { $regex: escapeRegex(req.query.q), $options: 'i' } }, { tasteTags: { $regex: escapeRegex(req.query.q), $options: 'i' } }];
-  const sort = req.query.sort === 'oldest' ? { brewedAt: 1 } : req.query.sort === 'rating' ? { rating: -1, brewedAt: -1 } : { brewedAt: -1 };
-  const [items, total] = await Promise.all([Brew.find(filter).sort(sort).skip((page - 1) * limit).limit(limit).populate('bean', 'name origin'), Brew.countDocuments(filter)]);
-  response(res, items, 'Berhasil', { page, limit, total, totalPages: Math.ceil(total / limit) });
+  const clauses = [];
+  const values = [];
+  if (req.query.method) { values.push(req.query.method); clauses.push(`r.method = $${values.length}`); }
+  if (req.query.beanId) { checkId(req.query.beanId); values.push(req.query.beanId); clauses.push(`r.bean_id = $${values.length}`); }
+  if (req.query.minRating) { values.push(Number(req.query.minRating)); clauses.push(`r.rating >= $${values.length}`); }
+  if (req.query.favorite === 'true') clauses.push('r.is_favorite = true');
+  if (req.query.q) {
+    values.push(`%${String(req.query.q).replace(/[\\%_]/g, '\\$&')}%`);
+    clauses.push(`(r.notes ILIKE $${values.length} ESCAPE '\\' OR array_to_string(r.taste_tags, ' ') ILIKE $${values.length} ESCAPE '\\')`);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const sort = req.query.sort === 'oldest' ? 'r.brewed_at ASC' : req.query.sort === 'rating' ? 'r.rating DESC, r.brewed_at DESC' : 'r.brewed_at DESC';
+  const [items, count] = await Promise.all([
+    getPool().query(`${brewSelect} ${where} ORDER BY ${sort} LIMIT $${values.length + 1} OFFSET $${values.length + 2}`, [...values, limit, (page - 1) * limit]),
+    getPool().query(`SELECT COUNT(*)::int AS total FROM brews r ${where}`, values)
+  ]);
+  response(res, items.rows.map(row => brewFromRow(row, joinedBean(row))), 'Berhasil', {
+    page, limit, total: count.rows[0].total, totalPages: Math.ceil(count.rows[0].total / limit)
+  });
 }));
+
 router.post('/brews', asyncHandler(async (req, res) => {
   const data = parse(brewSchema, req.body);
   checkId(data.bean);
-  if (!await Bean.exists({ _id: data.bean })) throw Object.assign(new Error('Biji kopi tidak ditemukan'), { status: 404 });
-  response(res, await (await Brew.create(data)).populate('bean', 'name origin'), 'Seduhan berhasil ditambahkan', undefined, 201);
+  await findOr404('beans', data.bean);
+  const { rows } = await getPool().query(
+    `INSERT INTO brews (id, bean_id, method, dose_grams, water_grams, water_temp_c, grind_size, grinder_setting,
+      brew_time_seconds, tds_percent, rating, cupping, taste_tags, notes, is_favorite, brewed_at)
+     VALUES ($1,$2,$3,$4::numeric,$5::numeric,$6::numeric,$7,$8,$9::numeric,$10::numeric,$11::integer,
+       $12::jsonb,$13::text[],$14,$15::boolean,COALESCE($16::timestamptz, now()))
+     RETURNING *`,
+    [randomUUID(), data.bean, data.method, data.doseGrams, data.waterGrams, data.waterTempC ?? null,
+      data.grindSize || null, data.grinderSetting || null, data.brewTimeSeconds ?? null, data.tdsPercent ?? null,
+      data.rating, JSON.stringify(data.cupping || {}), data.tasteTags || [], data.notes || null, data.isFavorite || false, data.brewedAt ?? null]
+  );
+  const bean = await findOr404('beans', rows[0].bean_id);
+  response(res, brewFromRow(rows[0], { id: bean.id, name: bean.name, origin: bean.origin }), 'Seduhan berhasil ditambahkan', undefined, 201);
 }));
-router.get('/brews/:id', asyncHandler(async (req, res) => response(res, await Brew.findById((await findOr404(Brew, req.params.id))._id).populate('bean'))));
+
+router.get('/brews/:id', asyncHandler(async (req, res) => {
+  checkId(req.params.id);
+  const { rows } = await getPool().query(
+    `SELECT r.*, b.id AS bean_id, b.name AS bean_name, b.origin AS bean_origin,
+      b.roaster AS bean_roaster, b.process AS bean_process, b.roast_level AS bean_roast_level,
+      b.variety AS bean_variety, b.altitude_masl AS bean_altitude_masl, b.roast_date AS bean_roast_date,
+      b.flavor_notes AS bean_flavor_notes, b.image_url AS bean_image_url, b.notes AS bean_notes,
+      b.created_at AS bean_created_at, b.updated_at AS bean_updated_at
+     FROM brews r JOIN beans b ON b.id = r.bean_id WHERE r.id = $1`, [req.params.id]
+  );
+  if (!rows[0]) throw Object.assign(new Error('Data tidak ditemukan'), { status: 404 });
+  const row = rows[0];
+  const bean = beanFromRow({
+    id: row.bean_id, name: row.bean_name, origin: row.bean_origin, roaster: row.bean_roaster,
+    process: row.bean_process, roast_level: row.bean_roast_level, variety: row.bean_variety,
+    altitude_masl: row.bean_altitude_masl, roast_date: row.bean_roast_date, flavor_notes: row.bean_flavor_notes,
+    image_url: row.bean_image_url, notes: row.bean_notes, created_at: row.bean_created_at, updated_at: row.bean_updated_at
+  });
+  response(res, brewFromRow(row, bean));
+}));
+
 router.put('/brews/:id', asyncHandler(async (req, res) => {
-  const brew = await findOr404(Brew, req.params.id);
+  await findOr404('brews', req.params.id);
   const data = parse(brewSchema.partial(), req.body);
-  if (data.bean) { checkId(data.bean); if (!await Bean.exists({ _id: data.bean })) throw Object.assign(new Error('Biji kopi tidak ditemukan'), { status: 404 }); }
-  brew.set(data);
-  await brew.save();
-  response(res, await brew.populate('bean', 'name origin'), 'Seduhan berhasil diperbarui');
+  if (data.bean) { checkId(data.bean); await findOr404('beans', data.bean); }
+  const columns = { bean: 'bean_id', method: 'method', doseGrams: 'dose_grams', waterGrams: 'water_grams',
+    waterTempC: 'water_temp_c', grindSize: 'grind_size', grinderSetting: 'grinder_setting',
+    brewTimeSeconds: 'brew_time_seconds', tdsPercent: 'tds_percent', rating: 'rating', cupping: 'cupping',
+    tasteTags: 'taste_tags', notes: 'notes', isFavorite: 'is_favorite', brewedAt: 'brewed_at' };
+  const entries = Object.entries(data).filter(([, value]) => value !== undefined);
+  const values = entries.map(([key, value]) => key === 'cupping' ? JSON.stringify(value) : value);
+  const set = entries.map(([key], index) => `${columns[key]} = $${index + 1}${key === 'cupping' ? '::jsonb' : ''}`);
+  values.push(req.params.id);
+  const { rows } = await getPool().query(
+    `UPDATE brews SET ${set.length ? `${set.join(', ')}, ` : ''}updated_at = now() WHERE id = $${values.length} RETURNING *`, values
+  );
+  const bean = await findOr404('beans', rows[0].bean_id);
+  response(res, brewFromRow(rows[0], { id: bean.id, name: bean.name, origin: bean.origin }), 'Seduhan berhasil diperbarui');
 }));
+
 router.patch('/brews/:id/favorite', asyncHandler(async (req, res) => {
-  const brew = await findOr404(Brew, req.params.id);
-  brew.isFavorite = !brew.isFavorite;
-  await brew.save();
-  response(res, await brew.populate('bean', 'name origin'), 'Favorit diperbarui');
+  checkId(req.params.id);
+  const { rows } = await getPool().query(
+    'UPDATE brews SET is_favorite = NOT is_favorite, updated_at = now() WHERE id = $1 RETURNING *', [req.params.id]
+  );
+  if (!rows[0]) throw Object.assign(new Error('Data tidak ditemukan'), { status: 404 });
+  const bean = await findOr404('beans', rows[0].bean_id);
+  response(res, brewFromRow(rows[0], { id: bean.id, name: bean.name, origin: bean.origin }), 'Favorit diperbarui');
 }));
-router.delete('/brews/:id', asyncHandler(async (req, res) => { const brew = await findOr404(Brew, req.params.id); await brew.deleteOne(); response(res, null, 'Seduhan berhasil dihapus'); }));
+
+router.delete('/brews/:id', asyncHandler(async (req, res) => {
+  await findOr404('brews', req.params.id);
+  await getPool().query('DELETE FROM brews WHERE id = $1', [req.params.id]);
+  response(res, null, 'Seduhan berhasil dihapus');
+}));
 
 router.get('/stats', asyncHandler(async (req, res) => {
-  const [totalBrews, totalBeans, averages, favorite, topBean, breakdown, weekly] = await Promise.all([
-    Brew.countDocuments(), Bean.countDocuments(), Brew.aggregate([{ $group: { _id: null, avg: { $avg: '$rating' } } }]),
-    Brew.aggregate([{ $group: { _id: '$method', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }]),
-    Brew.aggregate([{ $group: { _id: '$bean', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 1 }, { $lookup: { from: 'beans', localField: '_id', foreignField: '_id', as: 'bean' } }, { $unwind: { path: '$bean', preserveNullAndEmptyArrays: true } }]),
-    Brew.aggregate([{ $group: { _id: '$method', count: { $sum: 1 } } }]),
-    Brew.aggregate([{ $match: { brewedAt: { $gte: new Date(Date.now() - 56 * 86400000) } } }, { $group: { _id: { $dateTrunc: { date: '$brewedAt', unit: 'week', startOfWeek: 'monday' } }, count: { $sum: 1 } } }])
+  const pool = getPool();
+  const [totals, average, favorite, topBean, breakdown, recentDates] = await Promise.all([
+    pool.query(`SELECT (SELECT COUNT(*)::int FROM brews) AS total_brews, (SELECT COUNT(*)::int FROM beans) AS total_beans`),
+    pool.query('SELECT AVG(rating)::float AS value FROM brews'),
+    pool.query('SELECT method, COUNT(*)::int AS count FROM brews GROUP BY method ORDER BY count DESC LIMIT 1'),
+    pool.query(`SELECT b.id, b.name, COUNT(*)::int AS count FROM brews r JOIN beans b ON b.id = r.bean_id
+      GROUP BY b.id, b.name ORDER BY count DESC LIMIT 1`),
+    pool.query('SELECT method, COUNT(*)::int AS count FROM brews GROUP BY method'),
+    pool.query('SELECT brewed_at FROM brews WHERE brewed_at >= $1', [new Date(Date.now() - 56 * 86400000)])
   ]);
+  const weeklyCounts = new Map();
+  for (const { brewed_at } of recentDates.rows) {
+    const date = new Date(brewed_at);
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+    const key = date.toISOString().slice(0, 10);
+    weeklyCounts.set(key, (weeklyCounts.get(key) || 0) + 1);
+  }
   const weeks = Array.from({ length: 8 }, (_, index) => {
-    const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - ((date.getDay() + 6) % 7) - (7 - index) * 7);
-    const match = weekly.find(item => new Date(item._id).toDateString() === date.toDateString());
-    return { weekStart: date.toISOString().slice(0, 10), count: match?.count || 0 };
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7) - (7 - index) * 7);
+    const weekStart = date.toISOString().slice(0, 10);
+    return { weekStart, count: weeklyCounts.get(weekStart) || 0 };
   });
   response(res, {
-    totalBrews, totalBeans, avgRating: averages.length ? Math.round(averages[0].avg * 10) / 10 : null,
-    favoriteMethod: favorite[0]?._id || null,
-    topBean: topBean[0]?.bean ? { id: String(topBean[0]._id), name: topBean[0].bean.name, count: topBean[0].count } : null,
-    brewsPerWeek: weeks, methodBreakdown: breakdown
+    totalBrews: Number(totals.rows[0].total_brews),
+    totalBeans: Number(totals.rows[0].total_beans),
+    avgRating: average.rows[0].value === null ? null : Math.round(average.rows[0].value * 10) / 10,
+    favoriteMethod: favorite.rows[0]?.method || null,
+    topBean: topBean.rows[0] ? { id: topBean.rows[0].id, name: topBean.rows[0].name, count: Number(topBean.rows[0].count) } : null,
+    brewsPerWeek: weeks,
+    methodBreakdown: breakdown.rows
   });
 }));
 
