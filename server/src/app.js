@@ -11,6 +11,7 @@ import { configureDnsResolver } from './config/dns.js';
 
 configureDnsResolver();
 const app = express();
+app.set('trust proxy', 1);
 const origins = (process.env.CLIENT_ORIGIN || '').split(',').map(value => value.trim()).filter(Boolean);
 app.use(helmet());
 app.use(cors({ origin(origin, callback) {
