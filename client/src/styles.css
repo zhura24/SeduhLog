@@ -470,7 +470,7 @@ p { line-height: 1.65; }
 .splash-top { display: flex; align-items: center; justify-content: space-between; }
 .splash-brand { color: var(--splash-ink); font-family: 'Fraunces Variable',serif; font-size: 24px; font-weight: 650; }
 .splash-skip { min-width: 44px; min-height: 44px; padding: 0; border: 0; color: var(--splash-muted); background: transparent; font-size: 15px; font-weight: 650; }
-.splash-main { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.splash-main { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: translateY(-48px); }
 .splash-visual { position: relative; flex: 0 0 auto; width: var(--illu); height: var(--illu); display: grid; place-items: center; isolation: isolate; }
 .splash-halo { position: absolute; width: var(--illu); height: var(--illu); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, #fff 60%, transparent), transparent 68%); box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 5%, transparent), 0 0 0 34px color-mix(in srgb, var(--accent) 4%, transparent); animation: splash-halo 5s ease-in-out infinite; }
 :root[data-theme="dark"] .splash-halo { background: radial-gradient(circle, color-mix(in srgb, #c9a27e 18%, transparent), transparent 68%); }
@@ -534,7 +534,7 @@ p { line-height: 1.65; }
   .splash-top { min-height: 80px; }
   .splash-brand { font-size: 18px; }
   .splash-skip { font-size: 13px; }
-  .splash-main { gap: clamp(12px, 3vh, 28px); }
+  .splash-main { gap: clamp(12px, 3vh, 28px); transform: translateY(-40px); }
   .splash-visual { width: var(--illu); height: var(--illu); }
   .splash-halo { width: 100%; height: 100%; }
   .splash-cup { width: 100%; height: 100%; }
