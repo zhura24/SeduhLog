@@ -4,6 +4,7 @@ import { DataType, newDb } from 'pg-mem';
 import request from 'supertest';
 import app from '../src/app.js';
 import { closePool, getPool, initializeDatabase, setPoolForTests } from '../src/db/pool.js';
+import { seedDatabase } from '../src/seed.js';
 
 let memoryPool;
 beforeAll(async () => {
@@ -34,6 +35,16 @@ async function addBean() {
 }
 
 describe('SeduhLog API', () => {
+  it('menambahkan seed contoh hanya ke database kosong', async () => {
+    const seeded = await seedDatabase();
+    expect(seeded).toEqual({ seeded: true, beanCount: 17, brewCount: 50 });
+    const counts = await getPool().query(
+      'SELECT (SELECT COUNT(*)::int FROM beans) AS beans, (SELECT COUNT(*)::int FROM brews) AS brews'
+    );
+    expect(Number(counts.rows[0].beans)).toBe(17);
+    expect(Number(counts.rows[0].brews)).toBe(50);
+    expect((await seedDatabase()).seeded).toBe(false);
+  });
   it('melayani health check', async () => {
     const { body } = await request(app).get('/api/health').expect(200);
     expect(body.data.status).toBe('ok');

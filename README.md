@@ -58,7 +58,7 @@ Urutan deployment:
 ## Keputusan Desain
 
 - Pengguna tunggal tanpa autentikasi sesuai cakupan TA; API tidak menyediakan pemisahan data antar pengguna.
-- Supabase PostgreSQL digunakan untuk penyimpanan persistensi. Skrip seed menambahkan 6 biji dan 15 seduhan contoh hanya ketika database kosong; seed tidak menghapus data pengguna.
+- Supabase PostgreSQL digunakan untuk penyimpanan persistensi. Skrip seed memasukkan 17 biji dan 50 seduhan contoh hanya ketika database kosong; seed tidak menghapus data yang sudah ada.
 - Antarmuka menggunakan bahasa Indonesia dan dirancang mobile-first dengan navigasi lima tab.
 - Data identitas pada `client/src/config/profile.js` mengikuti informasi dalam spesifikasi; periksa kembali nama, NIM, prodi, universitas, dan tautan GitHub sebelum publikasi.
 - Timer menyimpan timestamp saat berjalan, bukan menambahkan durasi berdasarkan jumlah interval, agar tetap akurat saat tab tidak aktif.

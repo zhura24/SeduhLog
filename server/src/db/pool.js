@@ -10,7 +10,7 @@ export function getPool() {
     if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL belum dikonfigurasi');
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+      ssl: { rejectUnauthorized: false },
       max: 1,
       idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 10000
