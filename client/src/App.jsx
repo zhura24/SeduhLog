@@ -61,7 +61,7 @@ function AppLayout({ toast, setToast }) {
     <div className="page-frame"><Outlet context={context} /></div>
     {!isForm && <BottomNav />}
     {!isForm && !isStandalone && installPrompt && installBanner && location.pathname === '/' && <div className="install-banner"><span><Coffee size={18} /> Pasang SeduhLog di perangkatmu</span><button onClick={install}>Pasang</button><button aria-label="Tutup" onClick={dismissBanner}><X size={16}/></button></div>}
-    {iosInstall && !isStandalone && location.pathname === '/about' && <InstallSheet onClose={() => setIosInstall(false)} />}
+    {iosInstall && !isStandalone && location.pathname === '/settings' && <InstallSheet onClose={() => setIosInstall(false)} />}
     {toast.message && <div className={`toast ${toast.type === 'error' ? 'toast-error' : ''}`} role="status">{toast.type === 'error' ? <CircleHelp size={18}/> : <Check size={18}/>} {toast.message}<button aria-label="Tutup notifikasi" onClick={() => setToast({message:'',type:'success'})}><X size={16}/></button></div>}
     <button className="sr-only" onClick={() => queryClient.clear()}>Bersihkan cache</button>
   </div>;
@@ -73,7 +73,7 @@ function BottomNav() {
     { to: '/brews', label: 'Seduhan', icon: BookOpen },
     { to: '/beans', label: 'Biji', icon: BeanIcon },
     { to: '/timer', label: 'Timer', icon: TimerIcon },
-    { to: '/about', label: 'Profil', icon: MoreHorizontal }
+    { to: '/profile', label: 'Profil', icon: MoreHorizontal }
   ];
   return <nav className="bottom-nav" aria-label="Navigasi utama">{tabs.map(({to,label,icon:Icon,end}) =>
     <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>{({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
@@ -140,7 +140,7 @@ function AppHome() {
   </main>;
 }
 function StatCard({ label, value, icon: Icon, detail }) {
-  return <Card className="stat-card"><div className="stat-icon"><Icon size={17}/></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div>{detail && <div className="stat-detail">{detail}</div>}</Card>;
+  return <Card className="stat-card">{Icon&&<div className="stat-icon"><Icon size={17}/></div>}<div className="stat-label">{label}</div><div className="stat-value">{value}</div>{detail && <div className="stat-detail">{detail}</div>}</Card>;
 }
 function BarChart({ data }) {
   const max = Math.max(1, ...data.map(item => item.count));
@@ -255,7 +255,7 @@ function BeanDetail() {
   const bean=query.data;
   return <main><PageHeader title="Detail biji" back/><DataState query={query}>{bean&&<div className="detail-enter">
     <Card className="bean-detail-hero"><BeanThumb bean={bean}/><div className="eyebrow">{bean.roaster||'Koleksi SeduhLog'}</div><h2>{bean.name}</h2><p>{bean.origin}</p><div className="chip-list"><Badge>{bean.process}</Badge><Badge tone="warm">{bean.roastLevel} roast</Badge>{bean.variety&&<Badge>{bean.variety}</Badge>}</div></Card>
-    <div className="stats-grid bean-stats"><StatCard label="Total seduhan" value={bean.brewCount}/><StatCard label="Rating rata-rata" value={bean.avgRating?`${bean.avgRating} / 5`:'—'}/></div>
+    <div className="stats-grid bean-stats"><StatCard label="Total seduhan" value={bean.brewCount} icon={Coffee}/><StatCard label="Rating rata-rata" value={bean.avgRating?`${bean.avgRating} / 5`:'—'} icon={Star}/></div>
     <Card className="bean-info"><h3>Informasi biji</h3><Param label="Ketinggian" value={bean.altitudeMasl?`${bean.altitudeMasl} mdpl`:'—'}/><Param label="Tanggal sangrai" value={bean.roastDate?dateLabel(bean.roastDate):'—'}/>{bean.notes&&<p>{bean.notes}</p>}</Card>
     {bean.flavorNotes?.length>0&&<div className="detail-block"><h3>Catatan rasa</h3><div className="chip-list">{bean.flavorNotes.map(note=><span className="taste-chip" key={note}>{note}</span>)}</div></div>}
     <div className="section-title"><h2>Seduhan dengan biji ini</h2></div>{bean.recentBrews?.length?bean.recentBrews.map(brew=><BrewCard key={brew.id} brew={brew} compact/>):<div className="empty-inline">Belum pernah diseduh.</div>}
@@ -361,7 +361,24 @@ function TimerPage() {
   </main>;
 }
 
+function ProfilePage() {
+  return <main><PageHeader title="Profil pengembang" eyebrow="TENTANG PEMBUAT"/>
+    <Card className="profile-card"><div className="profile-avatar">FS</div><div className="eyebrow">PENGEMBANG</div><h2>{profile.name}</h2><p>{profile.program}<br/>{profile.university}</p><div className="profile-identity"><span>NIM</span><b>{profile.nim}</b></div><a className="profile-link" href={`https://github.com/${profile.github}`} target="_blank" rel="noreferrer">@{profile.github} <ArrowRight size={15}/></a></Card>
+    <Link className="profile-shortcut card" to="/about"><span className="shortcut-icon"><Info size={19}/></span><span><b>Tentang aplikasi</b><small>Informasi SeduhLog dan teknologi</small></span><ChevronRight size={18}/></Link>
+    <Link className="profile-shortcut card" to="/settings"><span className="shortcut-icon"><Settings size={19}/></span><span><b>Pengaturan aplikasi</b><small>Tema, instalasi, dan cache</small></span><ChevronRight size={18}/></Link>
+    <p className="profile-note">Periksa kembali nama, NIM, program studi, universitas, dan tautan GitHub sebelum publikasi.</p>
+  </main>;
+}
+
 function AboutPage() {
+  return <main><PageHeader title="Tentang aplikasi" back eyebrow="RUANG KECIL UNTUK RASA"/>
+    <Card className="about-card about-page-card"><div className="about-icon"><Coffee/></div><div className="eyebrow">TUGAS AKHIR PRAKTIKUM</div><h2>SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi</h2><p>Jurnal personal untuk merekam setiap seduhan, mengelola biji kopi, dan memahami rasa di setiap cangkir.</p><div className="version-pill">Versi {__APP_VERSION__}</div><div className="tech-stack"><Badge>React</Badge><Badge>Express API</Badge><Badge>MongoDB</Badge><Badge>PWA</Badge></div></Card>
+    <Card className="about-extra"><div className="eyebrow">DIBUAT UNTUK</div><p>Praktikum Pemrograman Perangkat Bergerak</p><p>SeduhLog membantu menyimpan resep, catatan sensori, dan koleksi biji kopi dalam satu jurnal pribadi.</p></Card>
+    <a className="repo-link" href={profile.repository} target="_blank" rel="noreferrer"><Share size={16}/> Repo aplikasi di GitHub <ArrowRight size={15}/></a>
+  </main>;
+}
+
+function SettingsPage() {
   const {toast,install,installPrompt,online}=useOutletContext();
   const queryClient=useQueryClient();
   const [theme,setTheme]=useState(localStorage.getItem('seduhlog-theme')||'system');
@@ -374,17 +391,14 @@ function AboutPage() {
     media.addEventListener?.('change',applyTheme);
     return()=>media.removeEventListener?.('change',applyTheme);
   },[theme]);
-  return <main><PageHeader title="Tentang SeduhLog" eyebrow="RUANG KECIL UNTUK RASA"/>
-    <Card className="profile-card"><div className="profile-avatar">FS</div><div className="eyebrow">PENGEMBANG</div><h2>{profile.name}</h2><p>{profile.program}<br/>{profile.university}</p><div className="profile-identity"><span>NIM</span><b>{profile.nim}</b></div><a className="profile-link" href={`https://github.com/${profile.github}`} target="_blank" rel="noreferrer">@{profile.github} <ArrowRight size={15}/></a></Card>
-    <Card className="about-card"><div className="about-icon"><Coffee/></div><div className="eyebrow">TUGAS AKHIR PRAKTIKUM</div><h2>SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi</h2><p>Jurnal personal untuk merekam setiap seduhan, mengelola biji kopi, dan memahami rasa di setiap cangkir.</p><div className="version-pill">Versi {__APP_VERSION__}</div><div className="tech-stack"><Badge>React</Badge><Badge>Express API</Badge><Badge>MongoDB</Badge><Badge>PWA</Badge></div></Card>
-    <Card className="settings-card"><div className="section-title"><div><div className="eyebrow">PREFERENSI</div><h2>Pengaturan</h2></div><Settings size={19}/></div>
+  return <main><PageHeader title="Pengaturan aplikasi" back eyebrow="SESUAIKAN PENGALAMAN"/>
+    <Card className="settings-card settings-page-card"><div className="section-title"><div><div className="eyebrow">PREFERENSI</div><h2>Tampilan & perangkat</h2></div><Settings size={19}/></div>
       <div className="setting-item"><div><b>Tampilan</b><small>Sesuaikan suasana aplikasi</small></div><select aria-label="Tema tampilan" value={theme} onChange={event=>setTheme(event.target.value)}><option value="light">Terang</option><option value="dark">Gelap</option><option value="system">Ikuti sistem</option></select></div>
       <div className="setting-item"><div><b>Koneksi</b><small>{online?'Semua fitur siap digunakan':'Timer tetap dapat digunakan offline'}</small></div><span className={`connection ${online?'online':'offline'}`}>{online?<Wifi size={16}/>:<WifiOff size={16}/>} {online?'Online':'Offline'}</span></div>
       <div className="setting-item"><div><b>Pasang aplikasi</b><small>Tambahkan ke layar utama</small></div><button className="button button-small button-outline" onClick={install}>{installPrompt?'Pasang':'Petunjuk'} <Upload size={15}/></button></div>
       <div className="setting-item"><div><b>Bersihkan cache data</b><small>Hapus salinan data yang tersimpan</small></div><button className="button button-small button-outline" onClick={()=>{queryClient.clear();toast('Cache data berhasil dibersihkan');}}>Bersihkan</button></div>
     </Card>
-    <a className="repo-link" href={profile.repository} target="_blank" rel="noreferrer"><Share size={16}/> Repo aplikasi di GitHub <ArrowRight size={15}/></a>
-    <p className="profile-note">Nama dan data profil pengembang perlu diperiksa ulang sebelum aplikasi dipublikasikan.</p>
+    <p className="profile-note">Penghapusan cache mengosongkan data lokal yang tersimpan; data di MongoDB tidak dihapus.</p>
   </main>;
 }
 
@@ -397,7 +411,7 @@ function NotFound() {
 }
 
 function RouterApp({toast,setToast}) {
-  return <BrowserRouter><Routes><Route element={<AppLayout toast={toast} setToast={setToast}/>}><Route path="/" element={<AppHome/>}/><Route path="/brews" element={<BrewList/>}/><Route path="/beans" element={<BeanList/>}/><Route path="/timer" element={<TimerPage/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/brews/new" element={<BrewForm/>}/><Route path="/brews/:id/edit" element={<BrewForm/>}/><Route path="/brews/:id" element={<BrewDetail/>}/><Route path="/beans/new" element={<BeanForm/>}/><Route path="/beans/:id/edit" element={<BeanForm/>}/><Route path="/beans/:id" element={<BeanDetail/>}/><Route path="*" element={<NotFound/>}/></Route></Routes></BrowserRouter>;
+  return <BrowserRouter><Routes><Route element={<AppLayout toast={toast} setToast={setToast}/>}><Route path="/" element={<AppHome/>}/><Route path="/brews" element={<BrewList/>}/><Route path="/beans" element={<BeanList/>}/><Route path="/timer" element={<TimerPage/>}/><Route path="/profile" element={<ProfilePage/>}/><Route path="/about" element={<AboutPage/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="/brews/new" element={<BrewForm/>}/><Route path="/brews/:id/edit" element={<BrewForm/>}/><Route path="/brews/:id" element={<BrewDetail/>}/><Route path="/beans/new" element={<BeanForm/>}/><Route path="/beans/:id/edit" element={<BeanForm/>}/><Route path="/beans/:id" element={<BeanDetail/>}/><Route path="*" element={<NotFound/>}/></Route></Routes></BrowserRouter>;
 }
 
 export default function App() {

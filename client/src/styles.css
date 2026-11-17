@@ -330,7 +330,18 @@ p { line-height: 1.65; }
 .profile-identity { display: flex; justify-content: center; gap: 8px; color: var(--muted); font-size: 10px; }
 .profile-identity b { color: var(--text); }
 .profile-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 11px; color: var(--primary); font-size: 11px; font-weight: 700; }
+.profile-shortcut { min-height: 67px; margin-top: 10px; padding: 11px 13px; display: flex; align-items: center; gap: 10px; }
+.shortcut-icon { flex: 0 0 38px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: var(--primary); background: var(--surface-alt); }
+.profile-shortcut > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.profile-shortcut b { font-size: 11px; }
+.profile-shortcut small { color: var(--muted); font-size: 9px; }
+.profile-shortcut > svg { color: var(--muted); }
 .about-card { margin-top: 13px; padding: 18px; }
+.about-page-card { margin-top: 0; }
+.about-extra { margin-top: 11px; padding: 15px; }
+.about-extra .eyebrow { margin-bottom: 6px; }
+.about-extra p { margin: 4px 0 9px; color: var(--muted); font-size: 11px; }
+.about-extra p:last-child { margin-bottom: 0; }
 .about-icon { width: 44px; height: 44px; margin: 0 0 12px; border-radius: 14px; }
 .about-card h2 { margin: 7px 0; font-size: 21px; line-height: 1.23; }
 .about-card p { margin: 8px 0 12px; color: var(--muted); font-size: 11px; }
