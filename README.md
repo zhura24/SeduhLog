@@ -4,6 +4,7 @@ SeduhLog adalah aplikasi jurnal seduh kopi untuk menyimpan resep, profil Biji Ko
 
 ## Fitur
 
+- Splash-screen pembuka dengan tiga tahap onboarding, ilustrasi cangkir dan biji yang dianimasikan, serta tata letak responsif untuk ponsel dan desktop.
 - Dashboard dengan statistik dan grafik seduhan 8 minggu.
 - Pengelolaan koleksi Biji Kopi dan jurnal seduhan, pencarian, filter, pagination, favorit, serta detail data.
 - Arsip untuk Biji Kopi dan Seduhan; memulihkan Biji Kopi juga memulihkan Seduhan yang ikut diarsipkan bersamanya. Penghapusan permanen tersedia dengan konfirmasi.

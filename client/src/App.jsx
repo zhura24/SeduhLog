@@ -116,7 +116,7 @@ function SplashScreen({ onEnter }) {
           <p className="splash-description" aria-live="polite">{steps[phase].description}</p>
           <div className="splash-progress" aria-label={`Tahap ${phase + 1} dari ${steps.length}`}>
             <div className="splash-progress-dots">{steps.map((step, index) =>
-              <button key={step.title} type="button" aria-label={`Lihat tahap ${index + 1}: ${step.title}`} aria-current={index === phase ? 'step' : undefined} onClick={() => setPhase(index)} className={index === phase ? 'active' : ''}/>
+              <button key={step.title} type="button" aria-label={`Slide ${index + 1} dari ${steps.length}`} aria-current={index === phase ? 'step' : undefined} onClick={() => setPhase(index)} className={index === phase ? 'active' : ''}/>
             )}</div>
           </div>
           <div className="splash-actions">
