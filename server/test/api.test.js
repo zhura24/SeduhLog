@@ -58,13 +58,72 @@ describe('SeduhLog API', () => {
     await request(app).delete(`/api/beans/${created.body.data.id}`).expect(200);
   });
   it('menolak data biji tidak valid dengan 400', async () => {
-    await request(app).post('/api/beans').send({ name: 'x', origin: '' }).expect(400);
+    const result = await request(app).post('/api/beans').send({ name: 'x', origin: '' }).expect(400);
+    expect(result.body.errors).toContainEqual({ field: 'name', message: 'Nama Biji Kopi minimal 2 karakter' });
   });
-  it('mencegah penghapusan biji yang masih digunakan', async () => {
+  it('mengarsipkan Biji Kopi beserta Seduhan terkait dan memulihkannya bersama', async () => {
+    const bean = await addBean();
+    const brew = await request(app).post('/api/brews').send({ bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4 }).expect(201);
+    const archived = await request(app).delete(`/api/beans/${bean}`).expect(200);
+    expect(archived.body.data.archivedBrews).toBe(1);
+    expect((await request(app).get('/api/beans')).body.meta.total).toBe(0);
+    expect((await request(app).get('/api/brews')).body.meta.total).toBe(0);
+    expect((await request(app).get('/api/stats')).body.data.totalBrews).toBe(0);
+    expect((await request(app).get('/api/stats')).body.data.totalBeans).toBe(0);
+    expect((await request(app).get('/api/archive/beans')).body.meta.total).toBe(1);
+    expect((await request(app).get('/api/archive/brews')).body.meta.total).toBe(1);
+    await request(app).patch(`/api/archive/brews/${brew.body.data.id}/restore`).expect(409);
+    await request(app).post('/api/brews').send({ bean, method: 'v60', doseGrams: 15, waterGrams: 240, rating: 4 }).expect(404);
+    const restored = await request(app).patch(`/api/archive/beans/${bean}/restore`).expect(200);
+    expect(restored.body.data.restoredBrews).toBe(1);
+    expect((await request(app).get('/api/beans')).body.meta.total).toBe(1);
+    expect((await request(app).get('/api/brews')).body.meta.total).toBe(1);
+  });
+  it('memulihkan dan menghapus permanen Seduhan melalui Arsip', async () => {
+    const bean = await addBean();
+    const brew = await request(app).post('/api/brews').send({
+      bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4
+    }).expect(201);
+    const id = brew.body.data.id;
+    await request(app).delete(`/api/brews/${id}`).expect(200);
+    expect((await request(app).get('/api/archive/brews')).body.meta.total).toBe(1);
+    await request(app).patch(`/api/archive/brews/${id}/restore`).expect(200);
+    expect((await request(app).get('/api/brews')).body.meta.total).toBe(1);
+    await request(app).delete(`/api/brews/${id}`).expect(200);
+    await request(app).delete(`/api/archive/brews/${id}`).expect(200);
+    expect((await request(app).get('/api/archive/brews')).body.meta.total).toBe(0);
+  });
+  it('tidak memulihkan Seduhan yang diarsipkan mandiri saat Biji Kopi dipulihkan', async () => {
+    const bean = await addBean();
+    const createBrew = () => request(app).post('/api/brews').send({
+      bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4
+    }).expect(201);
+    const independentlyArchived = await createBrew();
+    await createBrew();
+    await request(app).delete(`/api/brews/${independentlyArchived.body.data.id}`).expect(200);
+    await request(app).delete(`/api/beans/${bean}`).expect(200);
+    await request(app).patch(`/api/archive/beans/${bean}/restore`).expect(200);
+    expect((await request(app).get('/api/brews')).body.meta.total).toBe(1);
+    expect((await request(app).get('/api/archive/brews')).body.meta.total).toBe(1);
+    await request(app).patch(`/api/archive/brews/${independentlyArchived.body.data.id}/restore`).expect(200);
+    expect((await request(app).get('/api/brews')).body.meta.total).toBe(2);
+  });
+  it('menghapus permanen Biji Kopi terarsip beserta Seduhan terkait', async () => {
     const bean = await addBean();
     await request(app).post('/api/brews').send({ bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4 }).expect(201);
-    const result = await request(app).delete(`/api/beans/${bean}`).expect(409);
-    expect(result.body.message).toMatch(/masih dipakai 1 seduhan/);
+    await request(app).delete(`/api/beans/${bean}`).expect(200);
+    const result = await request(app).delete(`/api/archive/beans/${bean}`).expect(200);
+    expect(result.body.data.deletedBrews).toBe(1);
+    expect((await request(app).get('/api/archive/beans')).body.meta.total).toBe(0);
+    expect((await request(app).get('/api/archive/brews')).body.meta.total).toBe(0);
+  });
+  it('menolak penghapusan permanen jika data belum masuk Arsip', async () => {
+    const bean = await addBean();
+    const brew = await request(app).post('/api/brews').send({
+      bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4
+    }).expect(201);
+    await request(app).delete(`/api/archive/brews/${brew.body.data.id}`).expect(409);
+    await request(app).delete(`/api/archive/beans/${bean}`).expect(404);
   });
   it('membuat, menampilkan, dan mengganti status favorit seduhan', async () => {
     const bean = await addBean();
@@ -94,9 +153,10 @@ describe('SeduhLog API', () => {
   });
   it('menolak cupping score di luar rentang', async () => {
     const bean = await addBean();
-    await request(app).post('/api/brews').send({
+    const result = await request(app).post('/api/brews').send({
       bean, method: 'v60', doseGrams: 15, waterGrams: 240, rating: 4, cupping: { aroma: 11 }
     }).expect(400);
+    expect(result.body.errors).toContainEqual({ field: 'cupping.aroma', message: 'Nilai aroma maksimal 10' });
   });
   it('menyediakan statistik dan 404 untuk data yang tidak ada', async () => {
     expect((await request(app).get('/api/stats')).body.data.totalBrews).toBe(0);

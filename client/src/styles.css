@@ -241,6 +241,7 @@ p { line-height: 1.65; }
 .modal-backdrop { position: fixed; z-index: 50; inset: 0; display: grid; align-items: center; justify-items: center; padding: 20px; background: rgba(25,18,14,.48); backdrop-filter: blur(4px); }
 .dialog { width: min(100%,360px); padding: 23px; border-radius: 20px; background: var(--surface); text-align: center; box-shadow: 0 18px 55px rgba(0,0,0,.2); }
 .dialog-icon { display: grid; place-items: center; width: 46px; height: 46px; margin: 0 auto 13px; border-radius: 15px; color: var(--danger); background: color-mix(in srgb,var(--danger) 13%,var(--surface)); }
+.dialog-icon-archive { color: var(--primary); background: var(--surface-alt); }
 .dialog h2 { font-size: 21px; }
 .dialog p { margin: 8px 0 18px; color: var(--muted); font-size: 12px; }
 .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
@@ -255,6 +256,11 @@ p { line-height: 1.65; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field-row .field { margin: 10px 0; }
 .field-error { color: var(--danger); font-size: 10px; }
+.form-error-summary { margin: 13px 0 17px; padding: 12px 14px; border: 1px solid color-mix(in srgb,var(--danger) 35%,var(--border)); border-radius: 12px; color: var(--danger); background: color-mix(in srgb,var(--danger) 7%,var(--surface)); font-size: 11px; }
+.form-error-summary ul { margin: 7px 0 0; padding-left: 18px; }
+.form-error-summary li + li { margin-top: 4px; }
+.form-error-summary a { color: inherit; font-weight: 750; text-decoration: underline; text-underline-offset: 2px; }
+.field input[aria-invalid="true"], .field select[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: var(--danger); }
 .helper-link { color: var(--primary); font-size: 10px; font-weight: 650; }
 .sticky-save { position: sticky; z-index: 5; bottom: calc(78px + env(safe-area-inset-bottom)); width: 100%; margin-top: 13px; box-shadow: 0 5px 20px rgba(45,28,17,.14); }
 .form-page:has(.sticky-save) { padding-bottom: 10px; }
@@ -401,6 +407,18 @@ p { line-height: 1.65; }
 .profile-shortcut b { font-size: 11px; }
 .profile-shortcut small { color: var(--muted); font-size: 9px; }
 .profile-shortcut > svg { color: var(--muted); }
+.archive-intro { margin: -10px 0 15px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.archive-tabs { margin-bottom: 14px; }
+.archive-list { gap: 10px; }
+.archive-card { min-width: 0; padding: 13px; }
+.archive-item { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.archive-item-icon { flex: 0 0 48px; width: 48px; height: 52px; display: grid; place-items: center; border-radius: 13px; color: var(--primary); background: var(--surface-alt); }
+.archive-item-main { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: 4px; }
+.archive-item-main b { overflow: hidden; font-family: 'Fraunces Variable',serif; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.archive-item-main span, .archive-item-main small { color: var(--muted); font-size: 10px; }
+.archive-actions { margin-top: 12px; display: flex; gap: 8px; }
+.archive-actions .button { flex: 1; min-width: 0; }
+.archive-actions .button-danger-soft { gap: 5px; padding: 0 8px; font-size: 10px; }
 .about-card { margin-top: 13px; padding: 18px; }
 .about-page-card { margin-top: 0; }
 .about-extra { margin-top: 11px; padding: 15px; }

@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS beans (
   image_url text,
   notes varchar(500),
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  archived_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS brews (
@@ -34,11 +35,19 @@ CREATE TABLE IF NOT EXISTS brews (
   is_favorite boolean NOT NULL DEFAULT false,
   brewed_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  archived_at timestamptz,
+  archived_with_bean boolean NOT NULL DEFAULT false
 );
+
+ALTER TABLE beans ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+ALTER TABLE brews ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+ALTER TABLE brews ADD COLUMN IF NOT EXISTS archived_with_bean boolean NOT NULL DEFAULT false;
 
 CREATE INDEX IF NOT EXISTS brews_bean_id_idx ON brews (bean_id);
 CREATE INDEX IF NOT EXISTS brews_brewed_at_idx ON brews (brewed_at DESC);
+CREATE INDEX IF NOT EXISTS beans_archived_at_idx ON beans (archived_at);
+CREATE INDEX IF NOT EXISTS brews_archived_at_idx ON brews (archived_at);
 `;
 
 export const securitySql = `
