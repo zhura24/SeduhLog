@@ -368,45 +368,52 @@ function BrewScene({method,stepIndex,running,finished,title,caption}) {
   const sceneClass=`brew-scene scene-${method} phase-${stepIndex} ${running?'is-running':''} ${finished?'is-finished':''}`;
   return <Card className={sceneClass} aria-label={`Ilustrasi proses ${methodLabel(method)}`}>
     <div className="scene-copy"><span className="scene-live"><i/> {running?'SEDANG BERLANGSUNG':finished?'SELESAI':method==='cold_brew'?'PANDUAN SEDUH':'PANDUAN LANGKAH'}</span><b>{title}</b><p>{caption}</p></div>
-    <svg className="scene-art" viewBox="0 0 220 116" role="img" aria-label={`${methodLabel(method)}: ${title}`} preserveAspectRatio="xMidYMid meet">
-      <ellipse className="scene-glow" cx="112" cy="91" rx="91" ry="12"/>
-      <path className="scene-table" d="M22 96h176" />
-      {method==='v60'&&<g className="scene-v60">
-        <path className="scene-vessel" d="M37 33h34c5 0 8 4 7 9l-3 22H34l-3-22c-1-5 2-9 6-9z"/><path className="scene-handle" d="M77 40h8c8 0 8 15 0 15h-9"/><path className="scene-spout" d="M37 39 22 49l10 4"/><path className="scene-lid" d="M40 29h27"/>
-        <path className="scene-stream" d="M87 52c14 2 20 7 27 16"/>
-        <path className="scene-filter" d="m105 61 12 27h39l12-27z"/><path className="scene-coffee" d="M112 76h39l-5 12h-29z"/>
-        <path className="scene-carafe" d="M113 88h38l-4 9h-30z"/><path className="scene-cup-rim" d="M108 87h47"/>
-        <g className="scene-bubbles"><circle cx="123" cy="75" r="3"/><circle cx="139" cy="72" r="2"/><circle cx="146" cy="78" r="2.5"/></g>
+    <svg className={`scene-art scene-art-${method}`} viewBox="0 0 260 170" role="img" aria-label={`${methodLabel(method)}: ${title}`} preserveAspectRatio="xMidYMid meet">
+      <ellipse className="scene-glow" cx="130" cy="159" rx="108" ry="9"/>
+      <path className="scene-table" d="M18 162h224" />
+      {method==='v60'&&<g className="scene-v60" transform="translate(20 8) scale(1.35)">
+        <path className="scene-server" d="M111 83h47l-4 18c-2 9-9 14-20 14s-18-5-20-14z"/><path className="scene-server-handle" d="M157 88h8c10 0 10 18 0 18h-10"/>
+        <path className="scene-server-coffee" d="M115 98h39l-2 9c-10 7-25 7-35 0z"/>
+        <path className="scene-vessel" d="M28 34h37c7 0 11 5 10 11l-4 24H24l-4-24c-1-6 2-11 8-11z"/>
+        <path className="scene-handle" d="M70 41h8c11 0 11 19 0 19h-9"/><path className="scene-spout" d="m29 41-18 12 13 5"/><path className="scene-lid" d="M32 29h30"/>
+        <path className="scene-stream" d="M83 56c15 2 20 7 28 15"/>
+        <path className="scene-filter" d="m102 64 13 34h42l13-34z"/>
+        <path className="scene-ridge" d="m110 67 11 28m1-29 6 29m9-29 1 29m10-29-4 29m13-29-9 29"/>
+        <path className="scene-coffee" d="M109 82h42l-4 14h-34z"/>
+        <path className="scene-bloom-surface" d="M111 83c8-7 12 5 20-1s12 5 19 0"/>
+        <path className="scene-dripper-rim" d="M98 64h78"/><path className="scene-dripper-base" d="M112 98h44"/>
+        <g className="scene-bubbles"><circle cx="119" cy="79" r="3"/><circle cx="134" cy="75" r="2.5"/><circle cx="145" cy="80" r="2"/></g>
+        <path className="scene-server-rim" d="M108 83h54"/>
       </g>}
-      {(method==='french_press'||method==='aeropress')&&<g className="scene-press">
+      {(method==='french_press'||method==='aeropress')&&<g className="scene-press" transform="translate(0 9) scale(1.45)">
         <path className="scene-press-glass" d="M76 37h67l-5 52H82z"/><path className="scene-coffee" d="M80 66h59l-3 21H83z"/>
         <path className="scene-press-top" d="M70 35h79"/><path className="scene-press-rod" d="M110 19v38"/><path className="scene-press-knob" d="M101 18h18"/>
         <path className="scene-press-foot" d="M73 92h73"/><path className="scene-press-handle" d="M143 44h10v25h-10"/>
         <g className="scene-bubbles"><circle cx="94" cy="73" r="3"/><circle cx="119" cy="78" r="2"/></g>
       </g>}
-      {method==='espresso'&&<g className="scene-espresso">
+      {method==='espresso'&&<g className="scene-espresso" transform="translate(0 9) scale(1.45)">
         <path className="scene-machine" d="M70 28h82v33h-12v9H88v-9H70z"/><path className="scene-machine-head" d="M91 61h41v9H91z"/>
         <path className="scene-portafilter" d="M98 69h28l-4 8h-20z"/><path className="scene-stream" d="M105 77v12m14-12v12"/>
         <path className="scene-cup" d="M96 88h34l-4 9h-26z"/><path className="scene-cup-rim" d="M92 87h42"/>
         <circle className="scene-indicator" cx="139" cy="40" r="3"/>
       </g>}
-      {method==='tubruk'&&<g className="scene-tubruk">
+      {method==='tubruk'&&<g className="scene-tubruk" transform="translate(0 9) scale(1.45)">
         <path className="scene-cup" d="M80 53h64l-5 39H85z"/><path className="scene-cup-rim" d="M76 53h72"/>
         <path className="scene-coffee" d="M87 68h50l-2 18H89z"/><path className="scene-handle" d="M144 61h12c9 0 8 19 0 19h-14"/>
         <path className="scene-stream" d="M109 26v26"/><g className="scene-bubbles"><circle cx="101" cy="71" r="3"/><circle cx="122" cy="77" r="2"/></g>
       </g>}
-      {method==='moka_pot'&&<g className="scene-moka">
+      {method==='moka_pot'&&<g className="scene-moka" transform="translate(0 9) scale(1.45)">
         <path className="scene-pot-base" d="m77 63 8-24h52l8 24-9 29H86z"/><path className="scene-pot-top" d="m86 39 8-13h34l9 13z"/>
         <path className="scene-pot-line" d="M84 62h55"/><path className="scene-pot-handle" d="M145 48h11v27h-12"/>
         <path className="scene-pot-knob" d="M103 25v-6h16v6"/><path className="scene-steam" d="M101 14c-5-5 5-6 0-11m16 11c-5-5 5-6 0-11"/>
       </g>}
-      {method==='cold_brew'&&<g className="scene-cold">
+      {method==='cold_brew'&&<g className="scene-cold" transform="translate(0 9) scale(1.45)">
         <path className="scene-jar" d="M81 30h58v60a7 7 0 0 1-7 7H88a7 7 0 0 1-7-7z"/><path className="scene-jar-lid" d="M77 27h66v8H77z"/>
         <path className="scene-coffee" d="M85 57h50v31a4 4 0 0 1-4 4H89a4 4 0 0 1-4-4z"/>
         <path className="scene-ice" d="m94 44 8-5 7 7-5 8h-8zm24 3 7-5 6 6-4 8h-8z"/>
         <path className="scene-jar-highlight" d="M89 37v13m0 9v20"/>
       </g>}
-      <path className="scene-steam scene-steam-one" d="M164 51c-7-7 7-9 0-16m14 16c-7-7 7-9 0-16"/>
+      <path className="scene-steam scene-steam-one" d="M193 51c-7-7 7-9 0-16m14 16c-7-7 7-9 0-16"/>
       {finished&&<g className="scene-sparkles"><path d="M173 69v10m-5-5h10M58 67v8m-4-4h8"/></g>}
     </svg>
     <span className="scene-method">{methodLabel(method)}</span>
