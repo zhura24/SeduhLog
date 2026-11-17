@@ -70,6 +70,69 @@ function FormErrorSummary({ errors, ids, labels }) {
 }
 function FieldError({ id, error }) { return error ? <small id={id} className="field-error" role="alert">{error}</small> : null; }
 
+function SplashScreen({ onEnter }) {
+  const [phase, setPhase] = useState(0);
+  const steps = [
+    { title: 'Kenali Biji Kopi', description: 'Setiap biji punya asal dan karakter rasa yang menunggu untuk ditemukan.' },
+    { title: 'Nikmati proses seduh', description: 'Racik dengan tenang, ikuti tiap langkah, dan temukan rasio favoritmu.' },
+    { title: 'Simpan cerita rasanya', description: 'Catat setiap cangkir dan lihat perjalanan seduhmu berkembang.' }
+  ];
+  const nextPhase = () => setPhase(current => (current + 1) % steps.length);
+  const trapFocus = event => {
+    if (event.key !== 'Tab') return;
+    const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')];
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+  return <div className={`splash-screen splash-phase-${phase}`} role="dialog" aria-modal="true" aria-labelledby="splash-title" onKeyDown={trapFocus}>
+    <div className="splash-shell">
+      <header className="splash-top">
+        <div className="splash-brand"><img src="/logo.svg" alt=""/><span>SeduhLog</span></div>
+        <button className="splash-skip" type="button" onClick={onEnter}>Lewati <ArrowRight size={15}/></button>
+      </header>
+      <main className="splash-main">
+        <div className="splash-visual">
+          <div className="splash-halo"/>
+          <div className="splash-orbit splash-orbit-one"><BeanIcon size={22}/></div>
+          <div className="splash-orbit splash-orbit-two"><Sparkles size={18}/></div>
+          <div className="splash-bean splash-bean-one"/>
+          <div className="splash-bean splash-bean-two"/>
+          <span className="splash-pour-stream"/>
+          <span className="splash-pour-drop"/>
+          <button className="splash-cup" type="button" onClick={nextPhase} aria-label={`Tahap ${phase + 1}: ${steps[phase].title}. Sentuh untuk melihat tahap berikutnya`}>
+            <img className="splash-cup-logo" src="/logo.svg" alt=""/>
+            <span>sentuh cangkir</span>
+          </button>
+        </div>
+        <section className="splash-message">
+          <span className="splash-eyebrow">RUANG KECIL UNTUK RASA</span>
+          <h1 id="splash-title">Ritual kecil,<br/><em>rasa yang besar.</em></h1>
+          <p className="splash-description" aria-live="polite">{steps[phase].description}</p>
+          <div className="splash-progress" aria-label={`Tahap ${phase + 1} dari ${steps.length}`}>
+            <div className="splash-progress-dots">{steps.map((step, index) =>
+              <button key={step.title} type="button" aria-label={`Lihat tahap ${index + 1}: ${step.title}`} aria-current={index === phase ? 'step' : undefined} onClick={() => setPhase(index)} className={index === phase ? 'active' : ''}/>
+            )}</div>
+            <span>{String(phase + 1).padStart(2, '0')} / 03 · {steps[phase].title}</span>
+          </div>
+          <div className="splash-actions">
+            <button className="button button-primary splash-enter" type="button" onClick={onEnter} autoFocus>Mulai menjelajah <ArrowRight size={17}/></button>
+            <button className="splash-next" type="button" onClick={nextPhase}><Sparkles size={15}/> Lihat animasi berikutnya</button>
+          </div>
+        </section>
+      </main>
+      <footer className="splash-footer"><span>Diseduh dengan sabar, dicatat dengan rasa.</span><span>CATAT · SEDUH · NIKMATI</span></footer>
+    </div>
+  </div>;
+}
+
 function useOnline() {
   const [online, setOnline] = useState(navigator.onLine);
   useEffect(() => {
@@ -645,6 +708,8 @@ function RouterApp({toast,setToast,theme,setTheme}) {
 export default function App() {
   const [toast,setToast]=useState({message:'',type:'success'});
   const [theme,setTheme]=useState(()=>localStorage.getItem('seduhlog-theme')||'system');
+  const [showSplash,setShowSplash]=useState(true);
+  const enterApp=()=>setShowSplash(false);
   useLayoutEffect(()=>{
     const root=document.documentElement;
     const media=window.matchMedia('(prefers-color-scheme: dark)');
@@ -655,6 +720,6 @@ export default function App() {
     return()=>media.removeEventListener?.('change',applyTheme);
   },[theme]);
   useEffect(()=>{if(!toast.message)return undefined;const timeout=setTimeout(()=>setToast({message:'',type:'success'}),3500);return()=>clearTimeout(timeout);},[toast]);
-  return <RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>;
+  return <><RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>{showSplash&&<SplashScreen onEnter={enterApp}/>}</>;
 }
 
