@@ -443,7 +443,6 @@ function ProfilePage() {
     <Card className="profile-card"><div className="profile-avatar">FS</div><div className="eyebrow">PENGEMBANG</div><h2>{profile.name}</h2><p>{profile.program}<br/>{profile.university}</p><div className="profile-identity"><span>NIM</span><b>{profile.nim}</b></div><a className="profile-link" href={`https://github.com/${profile.github}`} target="_blank" rel="noreferrer">@{profile.github} <ArrowRight size={15}/></a></Card>
     <Link className="profile-shortcut card" to="/about"><span className="shortcut-icon"><Info size={19}/></span><span><b>Tentang aplikasi</b><small>Informasi SeduhLog dan teknologi</small></span><ChevronRight size={18}/></Link>
     <Link className="profile-shortcut card" to="/settings"><span className="shortcut-icon"><Settings size={19}/></span><span><b>Pengaturan aplikasi</b><small>Tema, instalasi, dan cache</small></span><ChevronRight size={18}/></Link>
-    <p className="profile-note">Periksa kembali nama, NIM, program studi, universitas, dan tautan GitHub sebelum publikasi.</p>
   </main>;
 }
 
