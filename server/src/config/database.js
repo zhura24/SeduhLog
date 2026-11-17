@@ -1,6 +1,15 @@
 import mongoose from 'mongoose';
 
-export async function connectDatabase(uri) {
-  if (!uri) throw new Error('MONGODB_URI belum dikonfigurasi');
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 });
+let connectionPromise;
+
+export function connectDatabase(uri) {
+  if (!uri) return Promise.reject(new Error('MONGODB_URI belum dikonfigurasi'));
+  if (mongoose.connection.readyState === 1) return Promise.resolve(mongoose.connection);
+  if (!connectionPromise) {
+    connectionPromise = mongoose.connect(uri, { serverSelectionTimeoutMS: 10000 }).catch(error => {
+      connectionPromise = undefined;
+      throw error;
+    });
+  }
+  return connectionPromise;
 }
