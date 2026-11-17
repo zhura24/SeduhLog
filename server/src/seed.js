@@ -1,7 +1,10 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
+import { configureDnsResolver } from './config/dns.js';
 import Bean from './models/Bean.js';
 import Brew from './models/Brew.js';
+
+configureDnsResolver();
 
 const beans = [
   ['Gayo', 'Gayo, Aceh', 'washed', 'medium', ['Cokelat', 'Rempah']],

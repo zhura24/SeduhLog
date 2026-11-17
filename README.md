@@ -27,7 +27,7 @@ Prasyarat: Node.js 20+ dan npm.
 1. Siapkan MongoDB Atlas M0: buat akun dan cluster gratis, buat database user, lalu di Network Access tambahkan IP yang digunakan. Untuk praktik lokal mudah, Atlas menyediakan opsi `0.0.0.0/0`; batasi ke IP tertentu bila memungkinkan.
 2. Salin `server/.env.example` menjadi `server/.env`, isi `MONGODB_URI` dengan connection string Atlas termasuk nama database `seduhlog`. Jangan unggah `.env`.
 3. Isi `CLIENT_ORIGIN=http://localhost:5173` dan `NODE_ENV=development` pada `server/.env`.
-   Jika Node.js gagal mencari record DNS SRV Atlas (`querySrv ECONNREFUSED`), tambahkan `MONGODB_DNS_SERVERS=1.1.1.1,1.0.0.1` agar backend memakai resolver DNS tersebut.
+   Jika Node.js gagal mencari record DNS SRV Atlas (`querySrv ECONNREFUSED`), tambahkan `MONGODB_DNS_SERVERS=1.1.1.1,1.0.0.1` agar backend dan skrip seed memakai resolver DNS tersebut.
 4. Salin `client/.env.example` menjadi `client/.env`. Untuk lokal, gunakan `VITE_API_BASE_URL=http://localhost:5000/api`.
 5. Dari root project jalankan `npm install`, `npm install --prefix server`, dan `npm install --prefix client`.
 6. Untuk data demonstrasi, jalankan `npm run seed --prefix server`.
