@@ -67,7 +67,7 @@ const beans = [
     altitudeMasl: 1400,
     restDays: 6,
     flavorNotes: ['Cokelat susu', 'Almond', 'Kacang', 'Bersih'],
-    notes: 'Profil seimbang dan bersih, aman untuk harian. Biji andalan untuk espresso dan cold brew.',
+    notes: 'Profil seimbang dan bersih, aman untuk harian. Biji kopi andalan untuk espresso dan cold brew.',
   },
   {
     key: 'preanger',
@@ -171,7 +171,7 @@ const beans = [
     altitudeMasl: 1350,
     restDays: 5,
     flavorNotes: ['Apel merah', 'Madu', 'Cokelat susu', 'Teh'],
-    notes: 'Ringan, segar, dan mudah diminum. Biji yang aman untuk pemula.',
+    notes: 'Ringan, segar, dan mudah diminum. Biji kopi yang aman untuk pemula.',
   },
   {
     key: 'kalosi',
@@ -210,7 +210,7 @@ const beans = [
     altitudeMasl: 1950,
     restDays: 7,
     flavorNotes: ['Melati', 'Lemon', 'Bergamot', 'Teh'],
-    notes: 'Biji pembanding non-Indonesia untuk latihan cupping. Floral dan sangat bersih.',
+    notes: 'Biji kopi pembanding non-Indonesia untuk latihan cupping. Floral dan sangat bersih.',
   },
   {
     key: 'huila',
@@ -223,10 +223,10 @@ const beans = [
     altitudeMasl: 1700,
     restDays: 5,
     flavorNotes: ['Karamel', 'Apel', 'Cokelat', 'Seimbang'],
-    notes: 'Seimbang dan konsisten, dipakai sebagai baseline untuk membandingkan biji lain.',
+    notes: 'Seimbang dan konsisten, dipakai sebagai baseline untuk membandingkan biji kopi lain.',
   },
   {
-    // Sengaja tanpa seduhan: untuk menguji empty state dan hapus biji tanpa konflik 409.
+    // Sengaja tanpa seduhan: untuk menguji empty state dan hapus biji kopi tanpa konflik 409.
     key: 'sidikalang',
     name: 'Sidikalang Arabika',
     origin: 'Dairi, Sumatera Utara',

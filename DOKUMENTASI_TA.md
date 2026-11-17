@@ -6,14 +6,14 @@ Dokumen ini merangkum tujuan aplikasi, fitur yang tersedia, rancangan teknis, da
 
 ## 1. Deskripsi Aplikasi
 
-SeduhLog adalah aplikasi jurnal pribadi untuk membantu pengguna mencatat, mengelola, dan meninjau aktivitas menyeduh kopi. Pengguna dapat menyimpan informasi biji kopi, parameter penyeduhan, penilaian rasa, dan catatan cupping. Aplikasi juga menyediakan timer dengan panduan langkah penyeduhan dan kalkulator rasio kopi terhadap air.
+SeduhLog adalah aplikasi jurnal pribadi untuk membantu pengguna mencatat, mengelola, dan meninjau aktivitas menyeduh kopi. Pengguna dapat menyimpan informasi Biji Kopi, parameter penyeduhan, penilaian rasa, dan catatan cupping. Aplikasi juga menyediakan timer dengan panduan langkah penyeduhan dan kalkulator rasio kopi terhadap air.
 
 SeduhLog dibuat sebagai **Progressive Web App (PWA)** dengan antarmuka berbahasa Indonesia dan rancangan mobile-first. Aplikasi dapat dibuka melalui browser dan dipasang ke layar utama perangkat yang mendukung PWA. Data disimpan melalui REST API buatan sendiri ke basis data PostgreSQL yang di-host di Supabase.
 
 ### Tujuan
 
 - Menyediakan jurnal digital untuk mengarsipkan resep dan hasil seduhan kopi.
-- Membantu pengguna mengelola koleksi biji kopi beserta asal, proses, tingkat sangrai, dan catatan rasa.
+- Membantu pengguna mengelola koleksi Biji Kopi beserta asal, proses, tingkat sangrai, dan catatan rasa.
 - Membantu proses penyeduhan dengan preset metode, timer, dan kalkulator rasio.
 - Menampilkan statistik sederhana agar pengguna dapat meninjau kebiasaan dan hasil seduhannya.
 - Memenuhi kebutuhan proyek TA praktikum: PWA, API buatan sendiri, navigasi bawah, halaman daftar dan detail, profil, serta deployment daring.
@@ -22,15 +22,15 @@ SeduhLog dibuat sebagai **Progressive Web App (PWA)** dengan antarmuka berbahasa
 
 ### Beranda
 
-Beranda menampilkan ringkasan jurnal, termasuk jumlah seduhan, rata-rata rating, metode favorit, biji teratas, grafik seduhan mingguan, dan seduhan terbaru. Jika belum ada catatan, aplikasi menampilkan keadaan kosong yang mengarahkan pengguna untuk mulai mencatat.
+Beranda menampilkan ringkasan jurnal, termasuk jumlah seduhan, rata-rata rating, metode favorit, Biji Kopi teratas, grafik seduhan mingguan, dan seduhan terbaru. Jika belum ada catatan, aplikasi menampilkan keadaan kosong yang mengarahkan pengguna untuk mulai mencatat.
 
 ### Jurnal Seduhan
 
-Pengguna dapat melihat, mencari, memfilter, mengurutkan, dan membuka detail catatan seduhan. Data seduhan mencakup biji yang digunakan, metode, dosis kopi, jumlah air, suhu, ukuran gilingan, waktu, TDS, rating, cupping, tag rasa, catatan, tanggal, dan status favorit. Seduhan dapat ditambah, diperbarui, dihapus, dan ditandai sebagai favorit.
+Pengguna dapat melihat, mencari, memfilter, mengurutkan, dan membuka detail catatan seduhan. Data seduhan mencakup Biji Kopi yang digunakan, metode, dosis kopi, jumlah air, suhu, ukuran gilingan, waktu, TDS, rating, cupping, tag rasa, catatan, tanggal, dan status favorit. Seduhan dapat ditambah, diperbarui, dihapus, dan ditandai sebagai favorit.
 
 ### Koleksi Biji Kopi
 
-Pengguna dapat melihat, mencari, memfilter, dan mengurutkan koleksi biji. Informasi biji mencakup nama, asal, roaster, proses, tingkat sangrai, varietas, ketinggian, tanggal sangrai, catatan rasa, gambar, dan catatan tambahan. Detail biji juga menampilkan jumlah/rating seduhan terkait.
+Pengguna dapat melihat, mencari, memfilter, dan mengurutkan koleksi Biji Kopi. Informasinya mencakup nama, asal, roaster, proses, tingkat sangrai, varietas, ketinggian, tanggal sangrai, catatan rasa, gambar, dan catatan tambahan. Detail Biji Kopi juga menampilkan jumlah/rating seduhan terkait.
 
 ### Timer dan Kalkulator
 
@@ -48,11 +48,11 @@ Aplikasi memakai lima tab navigasi utama:
 |---|---|
 | Beranda | Statistik dan ringkasan jurnal |
 | Seduhan | Daftar, pencarian, filter, dan pengelolaan seduhan |
-| Biji | Daftar dan pengelolaan koleksi biji kopi |
+| Biji Kopi | Daftar dan pengelolaan koleksi Biji Kopi |
 | Timer | Timer seduh dan kalkulator rasio |
 | Profil | Profil pengembang, informasi aplikasi, dan pengaturan |
 
-Setiap daftar utama menyediakan akses ke halaman detail. Form tambah dan ubah digunakan untuk mengelola data biji maupun seduhan.
+Setiap daftar utama menyediakan akses ke halaman detail. Form tambah dan ubah digunakan untuk mengelola data Biji Kopi maupun seduhan.
 
 ## 4. Arsitektur dan Teknologi
 
@@ -79,12 +79,12 @@ Frontend mengakses backend melalui satu modul API agar konfigurasi alamat server
 
 Basis data utama memiliki dua tabel:
 
-- **`beans`** menyimpan profil biji kopi.
+- **`beans`** menyimpan profil Biji Kopi.
 - **`brews`** menyimpan catatan seduhan dan memiliki relasi `bean_id` ke `beans.id`.
 
-Kedua tabel menggunakan UUID sebagai identitas. Relasi seduhan ke biji menggunakan foreign key; biji yang masih digunakan oleh catatan seduhan tidak dapat dihapus. Kolom dan nilai penting memiliki batasan basis data, misalnya rentang dosis, air, suhu, rating, serta pilihan metode dan tingkat sangrai.
+Kedua tabel menggunakan UUID sebagai identitas. Relasi seduhan ke Biji Kopi menggunakan foreign key; Biji Kopi yang masih digunakan oleh catatan seduhan tidak dapat dihapus. Kolom dan nilai penting memiliki batasan basis data, misalnya rentang dosis, air, suhu, rating, serta pilihan metode dan tingkat sangrai.
 
-API juga menghitung data turunan seperti rasio air terhadap kopi dan rata-rata nilai cupping. Endpoint statistik menyajikan jumlah seduhan/biji, rata-rata rating, metode favorit, biji teratas, dan jumlah seduhan per minggu.
+API juga menghitung data turunan seperti rasio air terhadap kopi dan rata-rata nilai cupping. Endpoint statistik menyajikan jumlah seduhan/Biji Kopi, rata-rata rating, metode favorit, Biji Kopi teratas, dan jumlah seduhan per minggu.
 
 ## 6. REST API
 
@@ -94,8 +94,8 @@ Endpoint API menggunakan prefix `/api`. Endpoint utama meliputi:
 |---|---|
 | `GET /api/health` | Pemeriksaan kesehatan server |
 | `GET /api/methods` | Mengambil preset metode seduh |
-| `/api/beans` | Membaca, membuat, memperbarui, dan menghapus data biji |
-| `/api/beans/:id` | Mengambil atau mengubah detail biji |
+| `/api/beans` | Membaca, membuat, memperbarui, dan menghapus data Biji Kopi |
+| `/api/beans/:id` | Mengambil atau mengubah detail Biji Kopi |
 | `/api/brews` | Membaca, membuat, memperbarui, dan menghapus catatan seduhan |
 | `/api/brews/:id` | Mengambil atau mengubah detail seduhan |
 | `PATCH /api/brews/:id/favorite` | Mengubah status favorit |
@@ -114,14 +114,14 @@ Spesifikasi awal pada `PROMPT_SeduhLog.md` menjadi dasar fitur dan teknologi apl
 | Hosting backend | Render | Vercel |
 | Hosting frontend | Vercel atau Netlify | Vercel |
 | ID dan relasi data | MongoDB ObjectId dan reference | UUID dan foreign key PostgreSQL |
-| Seed awal | 6 biji dan 15 seduhan; seed awal dirancang mengganti data | Menggunakan dataset contoh yang diberikan: 17 biji dan 50 seduhan |
+| Seed awal | 6 Biji Kopi dan 15 seduhan; seed awal dirancang mengganti data | Menggunakan dataset contoh yang diberikan: 17 Biji Kopi dan 50 seduhan |
 | Perilaku seed | Menghapus data lama lalu mengisi data | Berjalan dalam transaksi dan dilewati jika tabel sudah berisi data, sehingga tidak menimpa atau menggandakan data |
 | Konfigurasi database | `MONGODB_URI` | `DATABASE_URL` untuk koneksi Supabase |
 | Halaman Profil | Route awal `/about` | Tab Profil saat ini menggunakan route `/profile` |
 
-Perubahan database dilakukan setelah keputusan proyek beralih dari MongoDB ke PostgreSQL. Kontrak dan tujuan REST API dipertahankan agar fitur frontend tetap dapat menggunakan operasi biji, seduhan, favorit, pencarian, filter, pagination, dan statistik.
+Perubahan database dilakukan setelah keputusan proyek beralih dari MongoDB ke PostgreSQL. Kontrak dan tujuan REST API dipertahankan agar fitur frontend tetap dapat menggunakan operasi Biji Kopi, seduhan, favorit, pencarian, filter, pagination, dan statistik.
 
-Data seed yang digunakan adalah **data contoh**, bukan ekspor riwayat database MongoDB lama. Karena itu, angka 17 biji dan 50 seduhan menggambarkan dataset demonstrasi yang dimasukkan ke database Supabase.
+Data seed yang digunakan adalah **data contoh**, bukan ekspor riwayat database MongoDB lama. Karena itu, angka 17 Biji Kopi dan 50 seduhan menggambarkan dataset demonstrasi yang dimasukkan ke database Supabase.
 
 ## 8. PWA, Deployment, dan Konfigurasi
 
@@ -149,4 +149,4 @@ Pada rangkaian validasi yang tercatat selama pengembangan, tes backend dan front
 
 ## 11. Kesimpulan
 
-SeduhLog telah mengimplementasikan aplikasi jurnal penyeduhan kopi berbasis PWA, REST API buatan sendiri, dan PostgreSQL di Supabase. Fitur utama meliputi pengelolaan biji dan seduhan, halaman detail, statistik, timer, kalkulator rasio, profil, dan instalasi PWA. Perubahan terbesar dari rancangan awal adalah penggunaan Supabase PostgreSQL sebagai pengganti MongoDB Atlas serta Vercel sebagai hosting backend, tanpa mengubah tujuan utama aplikasi.
+SeduhLog telah mengimplementasikan aplikasi jurnal penyeduhan kopi berbasis PWA, REST API buatan sendiri, dan PostgreSQL di Supabase. Fitur utama meliputi pengelolaan Biji Kopi dan seduhan, halaman detail, statistik, timer, kalkulator rasio, profil, dan instalasi PWA. Perubahan terbesar dari rancangan awal adalah penggunaan Supabase PostgreSQL sebagai pengganti MongoDB Atlas serta Vercel sebagai hosting backend, tanpa mengubah tujuan utama aplikasi.

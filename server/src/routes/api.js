@@ -101,7 +101,7 @@ router.post('/beans', asyncHandler(async (req, res) => {
     [randomUUID(), data.name, data.origin, data.roaster || null, data.process || 'washed', data.roastLevel || 'medium',
       data.variety || null, data.altitudeMasl ?? null, data.roastDate ?? null, data.flavorNotes || [], data.imageUrl || null, data.notes || null]
   );
-  response(res, beanFromRow(rows[0]), 'Biji berhasil ditambahkan', undefined, 201);
+  response(res, beanFromRow(rows[0]), 'Biji Kopi berhasil ditambahkan', undefined, 201);
 }));
 
 router.get('/beans/:id', asyncHandler(async (req, res) => {
@@ -125,20 +125,20 @@ router.put('/beans/:id', asyncHandler(async (req, res) => {
   const columns = { name: 'name', origin: 'origin', roaster: 'roaster', process: 'process', roastLevel: 'roast_level',
     variety: 'variety', altitudeMasl: 'altitude_masl', roastDate: 'roast_date', flavorNotes: 'flavor_notes', imageUrl: 'image_url', notes: 'notes' };
   const entries = Object.entries(data).filter(([, value]) => value !== undefined);
-  if (!entries.length) return response(res, beanFromRow(await findOr404('beans', req.params.id)), 'Biji berhasil diperbarui');
+  if (!entries.length) return response(res, beanFromRow(await findOr404('beans', req.params.id)), 'Biji Kopi berhasil diperbarui');
   const values = entries.map(([, value]) => value);
   const set = entries.map(([key], index) => `${columns[key]} = $${index + 1}`);
   values.push(req.params.id);
   const { rows } = await getPool().query(`UPDATE beans SET ${set.join(', ')}, updated_at = now() WHERE id = $${values.length} RETURNING *`, values);
-  response(res, beanFromRow(rows[0]), 'Biji berhasil diperbarui');
+  response(res, beanFromRow(rows[0]), 'Biji Kopi berhasil diperbarui');
 }));
 
 router.delete('/beans/:id', asyncHandler(async (req, res) => {
   await findOr404('beans', req.params.id);
   const count = await getPool().query('SELECT COUNT(*)::int AS count FROM brews WHERE bean_id = $1', [req.params.id]);
-  if (count.rows[0].count) throw Object.assign(new Error(`Biji ini masih dipakai ${count.rows[0].count} seduhan`), { status: 409 });
+  if (count.rows[0].count) throw Object.assign(new Error(`Biji Kopi ini masih dipakai ${count.rows[0].count} seduhan`), { status: 409 });
   await getPool().query('DELETE FROM beans WHERE id = $1', [req.params.id]);
-  response(res, null, 'Biji berhasil dihapus');
+  response(res, null, 'Biji Kopi berhasil dihapus');
 }));
 
 router.get('/brews', asyncHandler(async (req, res) => {

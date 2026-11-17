@@ -89,7 +89,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const result = await seedDatabase();
     process.stdout.write(result.seeded
-      ? `Seed berhasil: ${result.beanCount} biji dan ${result.brewCount} seduhan.\n`
+      ? `Seed berhasil: ${result.beanCount} biji kopi dan ${result.brewCount} seduhan.\n`
       : 'Database sudah berisi data; seed dilewati agar data yang ada tidak tertimpa.\n');
   } catch (error) {
     console.error(`Seed gagal: ${error.message}`);

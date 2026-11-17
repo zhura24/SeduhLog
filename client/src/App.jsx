@@ -76,7 +76,7 @@ function BottomNav() {
   const tabs = [
     { to: '/', label: 'Beranda', icon: Home, end: true },
     { to: '/brews', label: 'Seduhan', icon: BookOpen },
-    { to: '/beans', label: 'Biji', icon: BeanIcon },
+    { to: '/beans', label: 'Biji Kopi', icon: BeanIcon },
     { to: '/timer', label: 'Timer', icon: TimerIcon },
     { to: '/profile', label: 'Profil', icon: MoreHorizontal }
   ];
@@ -133,7 +133,7 @@ function AppHome() {
         <StatCard label="Total seduhan" value={value.totalBrews} icon={Coffee}/>
         <StatCard label="Rata-rata rating" value={value.avgRating ? `${value.avgRating} / 5` : '—'} icon={Star}/>
         <StatCard label="Metode favorit" value={method} icon={Flame}/>
-        <StatCard label="Biji teratas" value={value.topBean?.name || '—'} icon={BeanIcon} detail={value.topBean ? `${value.topBean.count} seduhan` : ''}/>
+        <StatCard label="Biji Kopi teratas" value={value.topBean?.name || '—'} icon={BeanIcon} detail={value.topBean ? `${value.topBean.count} seduhan` : ''}/>
       </div>
       <Card className="chart-card"><div className="section-title"><div><div className="eyebrow">KONSISTENSI</div><h2>Seduhan per minggu</h2></div><span className="trend-label"><Activity size={14}/> 8 minggu</span></div><BarChart data={value.brewsPerWeek || []}/></Card>
       <div className="section-title recent-heading"><div><div className="eyebrow">DARI JURNALMU</div><h2>Seduhan terbaru</h2></div><Link to="/brews" className="text-link">Semua <ArrowRight size={15}/></Link></div>
@@ -206,14 +206,14 @@ function BeanList() {
     initialPageParam: 1, getNextPageParam: last => last.meta.page < last.meta.totalPages ? last.meta.page + 1 : undefined
   });
   const items = query.data?.pages.flatMap(page => page.data) || [];
-  return <main><PageHeader title="Koleksi biji" eyebrow="ASAL & KARAKTER" action={<Link className="header-add" to="/beans/new" aria-label="Tambah biji"><Plus/></Link>}/>
-    <label className="search-box"><Search size={18}/><input aria-label="Cari biji" placeholder="Nama, asal, atau roaster..." value={search} onChange={event => setSearch(event.target.value)}/></label>
+  return <main><PageHeader title="Koleksi Biji Kopi" eyebrow="ASAL & KARAKTER" action={<Link className="header-add" to="/beans/new" aria-label="Tambah Biji Kopi"><Plus/></Link>}/>
+    <label className="search-box"><Search size={18}/><input aria-label="Cari Biji Kopi" placeholder="Nama, asal, atau roaster..." value={search} onChange={event => setSearch(event.target.value)}/></label>
     <div className="filter-row">{[['washed','Washed'],['natural','Natural'],['honey','Honey'],['anaerobic','Anaerobic']].map(([value,label])=><Chip key={value} selected={process===value} onClick={()=>setProcess(process===value?'':value)}>{label}</Chip>)}</div>
     <div className="filter-row compact-filter">{[['light','Light'],['medium','Medium'],['dark','Dark']].map(([value,label])=><Chip key={value} selected={roast===value} onClick={()=>setRoast(roast===value?'':value)}>{label} roast</Chip>)}</div>
-    <div className="list-tools"><span className="list-count"><Leaf size={15}/> Pilihan dari rakmu</span><select aria-label="Urutkan biji" value={sort} onChange={event=>setSort(event.target.value)}><option value="newest">Terbaru</option><option value="name">Nama A–Z</option></select></div>
-    <DataState query={query} empty="Belum ada biji yang cocok.">{items.length ? <div className="stack">{items.map(bean => <Link to={`/beans/${bean.id}`} className="bean-card card" key={bean.id}><BeanThumb bean={bean}/><div className="bean-card-body"><b>{bean.name}</b><span>{bean.origin}</span><div className="bean-badges"><Badge>{bean.process}</Badge><Badge tone="warm">{bean.roastLevel}</Badge></div><div className="flavor-row">{(bean.flavorNotes||[]).slice(0,3).map(note=><span key={note}>{note}</span>)}{bean.flavorNotes?.length>3&&<span>+{bean.flavorNotes.length-3}</span>}</div></div><div className="bean-count">{bean.brewCount || 0}<small>seduhan</small></div><ChevronRight className="row-chevron" size={17}/></Link>)}</div> : null}</DataState>
+    <div className="list-tools"><span className="list-count"><Leaf size={15}/> Pilihan dari rakmu</span><select aria-label="Urutkan Biji Kopi" value={sort} onChange={event=>setSort(event.target.value)}><option value="newest">Terbaru</option><option value="name">Nama A–Z</option></select></div>
+    <DataState query={query} empty="Belum ada Biji Kopi yang cocok.">{items.length ? <div className="stack">{items.map(bean => <Link to={`/beans/${bean.id}`} className="bean-card card" key={bean.id}><BeanThumb bean={bean}/><div className="bean-card-body"><b>{bean.name}</b><span>{bean.origin}</span><div className="bean-badges"><Badge>{bean.process}</Badge><Badge tone="warm">{bean.roastLevel}</Badge></div><div className="flavor-row">{(bean.flavorNotes||[]).slice(0,3).map(note=><span key={note}>{note}</span>)}{bean.flavorNotes?.length>3&&<span>+{bean.flavorNotes.length-3}</span>}</div></div><div className="bean-count">{bean.brewCount || 0}<small>seduhan</small></div><ChevronRight className="row-chevron" size={17}/></Link>)}</div> : null}</DataState>
     {query.hasNextPage && <button className="button button-outline load-more" onClick={()=>query.fetchNextPage()}>Muat lebih banyak <ArrowDown size={16}/></button>}
-    <Fab to="/beans/new" label="Tambah biji"/>
+    <Fab to="/beans/new" label="Tambah Biji Kopi"/>
   </main>;
 }
 
@@ -243,7 +243,7 @@ function BrewDetail() {
     {brew.cuppingAverage && <Card className="cupping-panel"><div className="section-title"><div><div className="eyebrow">PENILAIAN SENSORI</div><h2>Cupping</h2></div><strong>{brew.cuppingAverage}<small> / 10</small></strong></div>{Object.entries(brew.cupping||{}).filter(([,v])=>v).map(([key,value])=><div className="score-row" key={key}><span>{scoreLabel(key)}</span><div className="score-track"><i style={{width:`${value*10}%`}}/></div><b>{value}</b></div>)}</Card>}
     {!!brew.tasteTags?.length && <div className="detail-block"><h3>Karakter rasa</h3><div className="chip-list">{brew.tasteTags.map(tag=><span className="taste-chip" key={tag}>{tag}</span>)}</div></div>}
     {brew.notes&&<Card className="notes-card"><div className="eyebrow">CATATAN PRIBADI</div><p>{brew.notes}</p></Card>}
-    <Link className="related-link" to={`/beans/${brew.bean?.id}`}><BeanIcon size={18}/> Lihat detail biji <ArrowRight size={16}/></Link>
+    <Link className="related-link" to={`/beans/${brew.bean?.id}`}><BeanIcon size={18}/> Lihat detail Biji Kopi <ArrowRight size={16}/></Link>
     <div className="detail-actions"><Link className="button button-outline" to={`/brews/${id}/edit`}>Ubah catatan</Link><button className="button button-danger-soft" onClick={()=>setConfirm(true)}>Hapus</button></div>
     <button className="button button-primary full-button" onClick={()=>navigate(`/timer${brew.bean?.id?`?beanId=${encodeURIComponent(brew.bean.id)}`:''}`,{state:{method:brew.method,beanId:brew.bean?.id,doseGrams:brew.doseGrams,waterGrams:brew.waterGrams,waterTempC:brew.waterTempC}})}><RotateCcw size={17}/> Seduh lagi</button>
   </div>}</DataState>{confirm&&<ConfirmDialog title="Hapus catatan ini?" description="Catatan seduhan yang dihapus tidak dapat dikembalikan." onCancel={()=>setConfirm(false)} onConfirm={()=>remove.mutate()} pending={remove.isPending}/>}</main>;
@@ -256,17 +256,17 @@ function formatTime(seconds) { if(seconds===undefined||seconds===null||seconds==
 function BeanDetail() {
   const {id}=useParams(); const navigate=useNavigate(); const queryClient=useQueryClient(); const {toast}=useOutletContext(); const [confirm,setConfirm]=useState(false);
   const query=useQuery({queryKey:[...queryKeys.beans,id],queryFn:()=>fetchData(`/beans/${id}`)});
-  const remove=useMutation({mutationFn:()=>api(`/beans/${id}`,{method:'DELETE'}),onSuccess:()=>{queryClient.invalidateQueries({queryKey:queryKeys.beans});toast('Biji berhasil dihapus');navigate('/beans');},onError:error=>{setConfirm(false);toast(error.message,'error');}});
+  const remove=useMutation({mutationFn:()=>api(`/beans/${id}`,{method:'DELETE'}),onSuccess:()=>{queryClient.invalidateQueries({queryKey:queryKeys.beans});toast('Biji Kopi berhasil dihapus');navigate('/beans');},onError:error=>{setConfirm(false);toast(error.message,'error');}});
   const bean=query.data;
-  return <main><PageHeader title="Detail biji" back/><DataState query={query}>{bean&&<div className="detail-enter">
+  return <main><PageHeader title="Detail Biji Kopi" back/><DataState query={query}>{bean&&<div className="detail-enter">
     <Card className="bean-detail-hero"><BeanThumb bean={bean}/><div className="eyebrow">{bean.roaster||'Koleksi SeduhLog'}</div><h2>{bean.name}</h2><p>{bean.origin}</p><div className="chip-list"><Badge>{bean.process}</Badge><Badge tone="warm">{bean.roastLevel} roast</Badge>{bean.variety&&<Badge>{bean.variety}</Badge>}</div></Card>
     <div className="stats-grid bean-stats"><StatCard label="Total seduhan" value={bean.brewCount} icon={Coffee}/><StatCard label="Rating rata-rata" value={bean.avgRating?`${bean.avgRating} / 5`:'—'} icon={Star}/></div>
-    <Card className="bean-info"><h3>Informasi biji</h3><Param label="Ketinggian" value={bean.altitudeMasl?`${bean.altitudeMasl} mdpl`:'—'}/><Param label="Tanggal sangrai" value={bean.roastDate?dateLabel(bean.roastDate):'—'}/>{bean.notes&&<p>{bean.notes}</p>}</Card>
+    <Card className="bean-info"><h3>Informasi Biji Kopi</h3><Param label="Ketinggian" value={bean.altitudeMasl?`${bean.altitudeMasl} mdpl`:'—'}/><Param label="Tanggal sangrai" value={bean.roastDate?dateLabel(bean.roastDate):'—'}/>{bean.notes&&<p>{bean.notes}</p>}</Card>
     {bean.flavorNotes?.length>0&&<div className="detail-block"><h3>Catatan rasa</h3><div className="chip-list">{bean.flavorNotes.map(note=><span className="taste-chip" key={note}>{note}</span>)}</div></div>}
-    <div className="section-title"><h2>Seduhan dengan biji ini</h2></div>{bean.recentBrews?.length?bean.recentBrews.map(brew=><BrewCard key={brew.id} brew={brew} compact/>):<div className="empty-inline">Belum pernah diseduh.</div>}
-    <Link className="button button-primary full-button" to={`/timer?beanId=${encodeURIComponent(bean.id)}`}><Coffee size={17}/> Mulai seduh dengan biji ini</Link>
-    <div className="detail-actions"><Link className="button button-outline" to={`/beans/${id}/edit`}>Ubah biji</Link><button className="button button-danger-soft" onClick={()=>setConfirm(true)}>Hapus</button></div>
-  </div>}</DataState>{confirm&&<ConfirmDialog title="Hapus biji ini?" description="Biji yang masih digunakan oleh seduhan tidak dapat dihapus." onCancel={()=>setConfirm(false)} onConfirm={()=>remove.mutate()} pending={remove.isPending}/>}</main>;
+    <div className="section-title"><h2>Seduhan dengan Biji Kopi ini</h2></div>{bean.recentBrews?.length?bean.recentBrews.map(brew=><BrewCard key={brew.id} brew={brew} compact/>):<div className="empty-inline">Belum pernah diseduh.</div>}
+    <Link className="button button-primary full-button" to={`/timer?beanId=${encodeURIComponent(bean.id)}`}><Coffee size={17}/> Mulai seduh dengan Biji Kopi ini</Link>
+    <div className="detail-actions"><Link className="button button-outline" to={`/beans/${id}/edit`}>Ubah Biji Kopi</Link><button className="button button-danger-soft" onClick={()=>setConfirm(true)}>Hapus</button></div>
+  </div>}</DataState>{confirm&&<ConfirmDialog title="Hapus Biji Kopi ini?" description="Biji kopi yang masih digunakan oleh seduhan tidak dapat dihapus." onCancel={()=>setConfirm(false)} onConfirm={()=>remove.mutate()} pending={remove.isPending}/>}</main>;
 }
 
 function BeanForm() {
@@ -275,12 +275,12 @@ function BeanForm() {
   const [form,setForm]=useState({name:'',origin:'',roaster:'',process:'washed',roastLevel:'medium',variety:'',altitudeMasl:'',roastDate:'',flavorNotes:[],imageUrl:'',notes:''});
   const [flavor,setFlavor]=useState(''); const [errors,setErrors]=useState({});
   useEffect(()=>{if(existing.data)setForm({...existing.data,altitudeMasl:existing.data.altitudeMasl??'',roastDate:existing.data.roastDate?.slice(0,10)||''});},[existing.data]);
-  const save=useMutation({mutationFn:data=>editing?jsonMutation(`/beans/${id}`,'PUT',data):jsonMutation('/beans','POST',data),onSuccess:result=>{queryClient.invalidateQueries({queryKey:queryKeys.beans});toast(editing?'Biji diperbarui':'Biji ditambahkan');navigate(`/beans/${result.data.id}`);},onError:error=>{setErrors(Object.fromEntries((error.errors||[]).map(item=>[item.field,item.message])));toast(error.message,'error');}});
+  const save=useMutation({mutationFn:data=>editing?jsonMutation(`/beans/${id}`,'PUT',data):jsonMutation('/beans','POST',data),onSuccess:result=>{queryClient.invalidateQueries({queryKey:queryKeys.beans});toast(editing?'Biji Kopi diperbarui':'Biji Kopi ditambahkan');navigate(`/beans/${result.data.id}`);},onError:error=>{setErrors(Object.fromEntries((error.errors||[]).map(item=>[item.field,item.message])));toast(error.message,'error');}});
   const set=(key,value)=>{setForm(current=>({...current,[key]:value}));setErrors(current=>({...current,[key]:''}));};
   const addFlavor=()=>{const value=flavor.trim();if(value&&form.flavorNotes.length<8&&!form.flavorNotes.includes(value)){set('flavorNotes',[...form.flavorNotes,value]);setFlavor('');}};
   const submit=event=>{event.preventDefault();const next={};if(form.name.trim().length<2)next.name='Nama minimal 2 karakter';if(!form.origin.trim())next.origin='Asal wajib diisi';if(form.imageUrl&&!/^https?:\/\/.+/i.test(form.imageUrl))next.imageUrl='Masukkan URL http(s) yang valid';setErrors(next);if(!Object.keys(next).length)save.mutate({...form,altitudeMasl:form.altitudeMasl===''?undefined:Number(form.altitudeMasl),roastDate:form.roastDate||undefined});};
-  return <main className="form-page"><PageHeader title={editing?'Ubah biji':'Tambah biji'} back eyebrow="KOLEKSI KOPI"/>{editing&&existing.isPending?<Loading rows={4}/>:<form className="form-content" onSubmit={submit} noValidate>
-    <div className="field"><label htmlFor="bean-name">Nama biji *</label><input id="bean-name" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contoh: Gayo Honey"/>{errors.name&&<small className="field-error">{errors.name}</small>}</div>
+  return <main className="form-page"><PageHeader title={editing?'Ubah Biji Kopi':'Tambah Biji Kopi'} back eyebrow="KOLEKSI KOPI"/>{editing&&existing.isPending?<Loading rows={4}/>:<form className="form-content" onSubmit={submit} noValidate>
+    <div className="field"><label htmlFor="bean-name">Nama Biji Kopi *</label><input id="bean-name" value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Contoh: Gayo Honey"/>{errors.name&&<small className="field-error">{errors.name}</small>}</div>
     <div className="field"><label htmlFor="bean-origin">Asal *</label><input id="bean-origin" value={form.origin} onChange={e=>set('origin',e.target.value)} placeholder="Contoh: Gayo, Aceh"/>{errors.origin&&<small className="field-error">{errors.origin}</small>}</div>
     <div className="field"><label htmlFor="bean-roaster">Roaster</label><input id="bean-roaster" value={form.roaster||''} onChange={e=>set('roaster',e.target.value)} placeholder="Nama roastery"/></div>
     <div className="field-row"><div className="field"><label htmlFor="bean-process">Proses</label><select id="bean-process" value={form.process} onChange={e=>set('process',e.target.value)}>{['washed','natural','honey','anaerobic','lainnya'].map(x=><option key={x} value={x}>{x}</option>)}</select></div><div className="field"><label htmlFor="bean-roast">Level sangrai</label><select id="bean-roast" value={form.roastLevel} onChange={e=>set('roastLevel',e.target.value)}>{['light','medium','dark'].map(x=><option key={x} value={x}>{x}</option>)}</select></div></div>
@@ -289,7 +289,7 @@ function BeanForm() {
     <div className="field"><label htmlFor="bean-image">URL gambar (opsional)</label><input id="bean-image" type="url" value={form.imageUrl||''} onChange={e=>set('imageUrl',e.target.value)} placeholder="https://..."/>{errors.imageUrl&&<small className="field-error">{errors.imageUrl}</small>}</div>
     <div className="field"><label>Catatan rasa (maks. 8)</label><div className="chip-entry"><input value={flavor} onChange={e=>setFlavor(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addFlavor();}}} placeholder="Ketik lalu tekan Enter"/><button type="button" onClick={addFlavor}><Plus size={17}/></button></div><div className="chip-list">{form.flavorNotes.map(item=><button type="button" className="taste-chip removable" key={item} onClick={()=>set('flavorNotes',form.flavorNotes.filter(x=>x!==item))}>{item}<X size={13}/></button>)}</div></div>
     <div className="field"><label htmlFor="bean-notes">Catatan tambahan</label><textarea id="bean-notes" maxLength="500" rows="3" value={form.notes||''} onChange={e=>set('notes',e.target.value)}/></div>
-    <button className="button button-primary sticky-save" disabled={save.isPending}>{save.isPending?'Menyimpan...':'Simpan biji'} <Check size={18}/></button>
+    <button className="button button-primary sticky-save" disabled={save.isPending}>{save.isPending?'Menyimpan...':'Simpan Biji Kopi'} <Check size={18}/></button>
   </form>}</main>;
 }
 
@@ -313,7 +313,7 @@ function BrewForm() {
   const addTaste=value=>{const tag=(value||taste).trim();if(tag&&!form.tasteTags.includes(tag)&&form.tasteTags.length<8){update('tasteTags',[...form.tasteTags,tag]);setTaste('');}};
   const submit=event=>{event.preventDefault();const next={};if(!form.bean)next.bean='Pilih biji kopi';if(!form.rating)next.rating='Pilih rating';if(form.doseGrams<5||form.doseGrams>100)next.doseGrams='Dosis harus 5–100 gram';if(form.waterGrams<20||form.waterGrams>2000)next.waterGrams='Air harus 20–2000 gram';setErrors(next);if(Object.keys(next).length){toast(next.rating?'Pilih rating sebelum menyimpan.':'Periksa kembali data yang ditandai sebelum menyimpan.','error');const firstInvalidId=next.bean?'brew-bean':next.doseGrams?'dose':next.waterGrams?'water':'rating-field';document.getElementById(firstInvalidId)?.scrollIntoView({behavior:'smooth',block:'center'});return;}const data={...form,bean:form.bean,doseGrams:Number(form.doseGrams),waterGrams:Number(form.waterGrams),waterTempC:form.waterTempC===''?undefined:Number(form.waterTempC),grindSize:form.grindSize||undefined,brewTimeSeconds:form.brewTimeSeconds===''?undefined:Number(form.brewTimeSeconds),tdsPercent:form.tdsPercent===''?undefined:Number(form.tdsPercent),brewedAt:form.brewedAt?new Date(form.brewedAt).toISOString():undefined};save.mutate(data);};
   return <main className="form-page"><PageHeader title={editing?'Ubah seduhan':'Catat seduhan'} back eyebrow="JURNAL SEDUH"/>{(editing&&existing.isPending)||beanQuery.isPending?<Loading rows={5}/>:<form className="form-content" onSubmit={submit} noValidate>
-    <div className="field"><label htmlFor="brew-bean">Biji kopi *</label><select id="brew-bean" value={form.bean} onChange={e=>update('bean',e.target.value)}><option value="">Pilih biji</option>{beans.map(bean=><option key={bean.id} value={bean.id}>{bean.name} · {bean.origin}</option>)}</select>{errors.bean&&<small className="field-error">{errors.bean}</small>}<Link className="helper-link" to="/beans/new">+ Tambah biji baru</Link></div>
+    <div className="field"><label htmlFor="brew-bean">Biji Kopi *</label><select id="brew-bean" value={form.bean} onChange={e=>update('bean',e.target.value)}><option value="">Pilih Biji Kopi</option>{beans.map(bean=><option key={bean.id} value={bean.id}>{bean.name} · {bean.origin}</option>)}</select>{errors.bean&&<small className="field-error">{errors.bean}</small>}<Link className="helper-link" to="/beans/new">+ Tambah Biji Kopi baru</Link></div>
     <div className="field"><label>Metode seduh</label><div className="method-grid">{methods.map(item=><button type="button" key={item.method} className={`method-option ${form.method===item.method?'selected':''}`} onClick={()=>applyMethod(item.method)}><Coffee size={17}/>{item.label}</button>)}</div></div>
     <div className="field-row"><div className="field"><label htmlFor="dose">Dosis (g) *</label><input id="dose" type="number" min="5" max="100" step="0.1" value={form.doseGrams} onChange={e=>update('doseGrams',safeNumber(e.target.value))}/>{errors.doseGrams&&<small className="field-error">{errors.doseGrams}</small>}</div><div className="field"><label htmlFor="water">Air (g) *</label><input id="water" type="number" min="20" max="2000" step="1" value={form.waterGrams} onChange={e=>update('waterGrams',safeNumber(e.target.value))}/>{errors.waterGrams&&<small className="field-error">{errors.waterGrams}</small>}</div></div>
     <div className="ratio-preview"><span>Rasio seduh</span><b>1:{(Number(form.waterGrams||0)/Math.max(Number(form.doseGrams||1),1)).toFixed(1)}</b></div>
@@ -354,14 +354,14 @@ function TimerPage() {
   const recordBrew=()=>navigate(`/brews/new${beanId?`?beanId=${encodeURIComponent(beanId)}`:''}`,{state:{method:methodKey,doseGrams:dose,waterGrams:Math.round(dose*ratio),waterTempC:selected.temperature,grindSize:selected.grind,brewTimeSeconds:methodKey==='cold_brew'?'':timer.elapsed}});
   return <main><PageHeader title="Ruang seduh" eyebrow="RACIK DENGAN TENANG"/>
     <div className="segmented"><button className={section==='timer'?'active':''} onClick={()=>setSection('timer')}><TimerIcon size={16}/> Timer</button><button className={section==='calculator'?'active':''} onClick={()=>setSection('calculator')}><SlidersHorizontal size={16}/> Kalkulator</button></div>
-    {beanId&&(beanQuery.isError?<p className="timer-bean-error" role="alert">Data biji gagal dimuat. Kembali ke detail biji dan coba lagi.</p>:<div className="timer-bean-context"><BeanIcon size={16}/><span>MENYEDUH DENGAN <b>{beanQuery.data?.name||'Memuat biji...'}</b></span></div>)}
+    {beanId&&(beanQuery.isError?<p className="timer-bean-error" role="alert">Data Biji Kopi gagal dimuat. Kembali ke detail Biji Kopi dan coba lagi.</p>:<div className="timer-bean-context"><BeanIcon size={16}/><span>MENYEDUH DENGAN <b>{beanQuery.data?.name||'Memuat Biji Kopi...'}</b></span></div>)}
     {section==='calculator'?<section className="calculator-view">
       <Card className="calculator-card"><div className="eyebrow">KALKULATOR RASIO</div><h2>Temukan takaranmu.</h2><p>Atur dosis dan rasio untuk menghitung kebutuhan air.</p>
         <div className="field"><label htmlFor="calc-method">Preset metode</label><select id="calc-method" value={methodKey} onChange={event=>changeMethod(event.target.value)}>{methods.map(item=><option key={item.method} value={item.method}>{item.label} · 1:{item.ratio}</option>)}</select></div>
         <div className="field-row"><div className="field"><label htmlFor="calc-dose">Dosis kopi (g)</label><input id="calc-dose" type="number" min="1" value={dose} onChange={event=>updateDose(Number(event.target.value))}/></div><div className="field"><label htmlFor="calc-water">Air (g)</label><input id="calc-water" type="number" min="1" value={water} onChange={event=>updateWater(Number(event.target.value))}/></div></div>
         <div className="ratio-result"><span>Rasio seduh</span><strong>1 : {ratio.toFixed(1)}</strong><small>Suhu rekomendasi {selected.temperature}°C</small></div>
         <div className="ratio-lock"><button className="button button-outline" onClick={()=>{setRatio(selected.ratio);setWater(Math.round(dose*selected.ratio));}}>Hitung air dari dosis</button><button className="button button-outline" onClick={()=>{setRatio(selected.ratio);setDose(Math.round(water/selected.ratio*10)/10);}}>Hitung dosis dari air</button></div>
-      </Card><p className="calculator-note"><Info size={15}/> Rasio dapat disesuaikan sesuai biji dan selera.</p>
+      </Card><p className="calculator-note"><Info size={15}/> Rasio dapat disesuaikan sesuai Biji Kopi dan selera.</p>
     </section>:<section className="timer-view">
       <div className="timer-controls-top"><label htmlFor="timer-method">METODE SEDUH</label><select id="timer-method" value={methodKey} onChange={event=>changeMethod(event.target.value)}>{methods.map(item=><option key={item.method} value={item.method}>{item.label}</option>)}</select></div>
       <Card className="timer-card">
@@ -453,8 +453,8 @@ function ProfilePage() {
 
 function AboutPage() {
   return <main><PageHeader title="Tentang aplikasi" back eyebrow="RUANG KECIL UNTUK RASA"/>
-    <Card className="about-card about-page-card"><div className="about-icon"><Coffee/></div><div className="eyebrow">TUGAS AKHIR PRAKTIKUM</div><h2>SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi</h2><p>Jurnal personal untuk merekam setiap seduhan, mengelola biji kopi, dan memahami rasa di setiap cangkir.</p><div className="version-pill">Versi {__APP_VERSION__}</div><div className="tech-stack"><Badge>React</Badge><Badge>Express API</Badge><Badge>Supabase PostgreSQL</Badge><Badge>PWA</Badge></div></Card>
-    <Card className="about-extra"><div className="eyebrow">DIBUAT UNTUK</div><p>Praktikum Pemrograman Perangkat Bergerak</p><p>SeduhLog membantu menyimpan resep, catatan sensori, dan koleksi biji kopi dalam satu jurnal pribadi.</p></Card>
+    <Card className="about-card about-page-card"><div className="about-icon"><Coffee/></div><div className="eyebrow">TUGAS AKHIR PRAKTIKUM</div><h2>SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi</h2><p>Jurnal personal untuk merekam setiap seduhan, mengelola Biji Kopi, dan memahami rasa di setiap cangkir.</p><div className="version-pill">Versi {__APP_VERSION__}</div><div className="tech-stack"><Badge>React</Badge><Badge>Express API</Badge><Badge>Supabase PostgreSQL</Badge><Badge>PWA</Badge></div></Card>
+    <Card className="about-extra"><div className="eyebrow">DIBUAT UNTUK</div><p>Praktikum Pemrograman Perangkat Bergerak</p><p>SeduhLog membantu menyimpan resep, catatan sensori, dan koleksi Biji Kopi dalam satu jurnal pribadi.</p></Card>
     <a className="repo-link" href={profile.repository} target="_blank" rel="noreferrer"><Share size={16}/> Repo aplikasi di GitHub <ArrowRight size={15}/></a>
   </main>;
 }

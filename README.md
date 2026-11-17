@@ -1,11 +1,11 @@
 # SeduhLog: PWA Jurnal Seduh Kopi dan Cupping Notes Pribadi
 
-SeduhLog adalah aplikasi jurnal personal untuk menyimpan resep seduh kopi, profil biji, rating, dan cupping notes. Proyek tugas akhir praktikum Pemrograman Perangkat Bergerak ini menggunakan PWA React dan REST API Express sendiri.
+SeduhLog adalah aplikasi jurnal personal untuk menyimpan resep seduh kopi, profil Biji Kopi, rating, dan cupping notes. Proyek tugas akhir praktikum Pemrograman Perangkat Bergerak ini menggunakan PWA React dan REST API Express sendiri.
 
 ## Fitur
 
 - Dashboard dengan statistik dan grafik seduhan 8 minggu.
-- CRUD koleksi biji dan jurnal seduhan, pencarian, filter, pagination, favorit, serta detail data.
+- CRUD koleksi Biji Kopi dan jurnal seduhan, pencarian, filter, pagination, favorit, serta detail data.
 - Timer resep seduh dengan langkah, rasio, suhu, progress, bunyi, getar, dan dukungan Wake Lock bila tersedia.
 - Ilustrasi animasi pada timer yang berubah mengikuti metode seduh dan langkah aktif, termasuk efek menuang, blooming, pengepresan, dan ekstraksi.
 - Kalkulator rasio kopi/air, tema terang/gelap/sistem, status online/offline, dan dukungan instalasi PWA.
@@ -14,7 +14,7 @@ SeduhLog adalah aplikasi jurnal personal untuk menyimpan resep seduh kopi, profi
 
 ## Tangkapan layar
 
-Tambahkan tangkapan layar Beranda, Seduhan, Biji, Timer, dan Profil di sini sebelum pengumpulan.
+Tambahkan tangkapan layar Beranda, Seduhan, Biji Kopi, Timer, dan Profil di sini sebelum pengumpulan.
 
 ## Arsitektur
 
@@ -37,7 +37,7 @@ Prasyarat: Node.js 20+ dan npm.
 
 ### Endpoint API
 
-Semua endpoint memakai prefix `/api`: `GET /health`, `GET /methods`, CRUD `/beans`, CRUD `/brews`, `PATCH /brews/:id/favorite`, serta `GET /stats`. Daftar dan filter menerima query pagination `page` dan `limit`. Error memakai bentuk `{ success, message, errors }`; penghapusan biji yang masih direferensikan seduhan menghasilkan HTTP 409.
+Semua endpoint memakai prefix `/api`: `GET /health`, `GET /methods`, CRUD `/beans`, CRUD `/brews`, `PATCH /brews/:id/favorite`, serta `GET /stats`. Daftar dan filter menerima query pagination `page` dan `limit`. Error memakai bentuk `{ success, message, errors }`; penghapusan Biji Kopi yang masih direferensikan seduhan menghasilkan HTTP 409.
 
 ## Deploy gratis
 
@@ -58,7 +58,7 @@ Urutan deployment:
 ## Keputusan Desain
 
 - Pengguna tunggal tanpa autentikasi sesuai cakupan TA; API tidak menyediakan pemisahan data antar pengguna.
-- Supabase PostgreSQL digunakan untuk penyimpanan persistensi. Skrip seed memasukkan 17 biji dan 50 seduhan contoh hanya ketika database kosong; seed tidak menghapus data yang sudah ada.
+- Supabase PostgreSQL digunakan untuk penyimpanan persistensi. Skrip seed memasukkan 17 Biji Kopi dan 50 seduhan contoh hanya ketika database kosong; seed tidak menghapus data yang sudah ada.
 - Antarmuka menggunakan bahasa Indonesia dan dirancang mobile-first dengan navigasi lima tab.
 - Informasi pengembang pada Profil dikelola terpusat di `client/src/config/profile.js`.
 - Timer menyimpan timestamp saat berjalan, bukan menambahkan durasi berdasarkan jumlah interval, agar tetap akurat saat tab tidak aktif.
