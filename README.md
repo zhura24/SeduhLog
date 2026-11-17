@@ -7,6 +7,7 @@ SeduhLog adalah aplikasi jurnal personal untuk menyimpan resep seduh kopi, profi
 - Dashboard dengan statistik dan grafik seduhan 8 minggu.
 - CRUD koleksi biji dan jurnal seduhan, pencarian, filter, pagination, favorit, serta detail data.
 - Timer resep seduh dengan langkah, rasio, suhu, progress, bunyi, getar, dan dukungan Wake Lock bila tersedia.
+- Ilustrasi animasi pada timer yang berubah mengikuti metode seduh dan langkah aktif, termasuk efek menuang, blooming, pengepresan, dan ekstraksi.
 - Kalkulator rasio kopi/air, tema terang/gelap/sistem, status online/offline, dan dukungan instalasi PWA.
 - Tab Profil berisi identitas pengembang; informasi aplikasi dan pengaturan tersedia sebagai halaman terpisah dari Profil.
 - API REST Express + MongoDB/Mongoose, validasi Zod, dan skrip data contoh.

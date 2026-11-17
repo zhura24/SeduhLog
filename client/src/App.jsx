@@ -335,6 +335,8 @@ function TimerPage() {
   const targetWater=step?Math.round(dose*ratio*step.percent/100):Math.round(dose*ratio);
   const maxTime=selected.steps.at(-1)?.end||0;
   const progress=maxTime?Math.min(timer.elapsed/maxTime,1):0;
+  const sceneTitle=timer.finished?'Seduhan siap dinikmati':methodKey==='cold_brew'?'Proses seduh dingin':timer.running?(step?.name||'Ekstraksi berlangsung'):'Siapkan alat dan bahan';
+  const sceneCaption=timer.finished?'Tuangkan ke cangkir dan nikmati hasil racikanmu.':methodKey==='cold_brew'?'Rendam kopi dalam air dingin selama 12–18 jam.':timer.running?(step?`Ikuti langkah ini · target air ${targetWater} g`:'Pantau proses seduh hingga selesai.'):'Visual langkah akan mengikuti metode dan timer yang dipilih.';
   const changeMethod=value=>{const preset=methods.find(item=>item.method===value);setMethodKey(value);setRatio(preset.ratio);setWater(Math.round(dose*preset.ratio));timer.reset();};
   const updateDose=value=>{setDose(value);if(value>0)setWater(calculateRatio({mode:'water',dose:value,ratio}).water);};
   const updateWater=value=>{setWater(value);if(value>0)setRatio(Math.round(value/Math.max(Number(dose)||1,1)*10)/10);};
@@ -353,12 +355,62 @@ function TimerPage() {
         <svg className="timer-ring" viewBox="0 0 220 220" role="img" aria-label={`Timer ${formatTime(timer.elapsed)}`}><circle className="ring-bg" cx="110" cy="110" r="96"/><circle className="ring-progress" cx="110" cy="110" r="96" style={{strokeDashoffset:603*(1-progress)}}/></svg>
         <div className="timer-display"><div className="eyebrow">{selected.label.toUpperCase()}</div><strong>{formatTime(timer.elapsed)}</strong><span>{selected.steps.length?'WAKTU BERJALAN':'STOPWATCH'}</span></div>
       </Card>
+      <BrewScene method={methodKey} stepIndex={timer.stepIndex} running={timer.running} finished={timer.finished} title={sceneTitle} caption={sceneCaption}/>
       <Card className="timer-step-card">{methodKey==='cold_brew'?<><div className="step-number"><Moon size={18}/></div><div><b>Seduh dingin 12–18 jam</b><p>Timer langkah tidak tersedia untuk cold brew.</p></div></>:<><div className="step-number">{timer.finished?<Check size={18}/>:String(Math.min(timer.stepIndex+1,Math.max(selected.steps.length,1))).padStart(2,'0')}</div><div className="step-copy"><small>{timer.finished?'SELESAI':'LANGKAH SAAT INI'}</small><b>{timer.finished?'Seduhan siap dinikmati':step?.name||'Stopwatch siap dimulai'}</b><p>{selected.steps.length?(step?`Tuang sampai ${targetWater} g · ${formatTime(step.end)}`:'Semua langkah selesai'):'Atur waktu seduhmu secara manual'}</p>{selected.steps[timer.stepIndex+1]&&<span>Selanjutnya: {selected.steps[timer.stepIndex+1].name}</span>}</div><button className="skip-step" aria-label="Lewati langkah" onClick={timer.skipStep} disabled={!selected.steps.length}><ChevronRight/></button></>}</Card>
       <div className="timer-dose-row"><label>Dosis <input type="number" min="1" value={dose} onChange={event=>updateDose(Number(event.target.value))}/> g</label><label>Rasio 1:<input type="number" min="1" value={ratio} onChange={event=>{setRatio(Number(event.target.value));setWater(Math.round(dose*Number(event.target.value)));}}/></label><span>Air total <b>{Math.round(dose*ratio)} g</b></span></div>
       {timer.finished?<div className="timer-actions"><button className="button button-primary timer-main-action" onClick={()=>navigate('/brews/new',{state:{method:methodKey,doseGrams:dose,waterGrams:Math.round(dose*ratio),waterTempC:selected.temperature,brewTimeSeconds:timer.elapsed}})}><BookOpen size={18}/> Simpan sebagai seduhan</button><button className="timer-reset" aria-label="Reset timer" onClick={timer.reset}><RotateCcw size={19}/></button></div>:methodKey==='cold_brew'?<p className="timer-tip">Timer dinonaktifkan untuk metode cold brew.</p>:<div className="timer-actions">{!timer.running?<button className="button button-primary timer-main-action" onClick={timer.start}><Play size={18} fill="currentColor"/> {timer.elapsed?'Lanjut':'Mulai'}</button>:<button className="button button-primary timer-main-action" onClick={timer.pause}><Pause size={18} fill="currentColor"/> Jeda</button>}<button className="timer-reset" aria-label="Reset timer" onClick={timer.reset}><RotateCcw size={19}/></button>{timer.elapsed>0&&<button className="timer-reset" aria-label="Lewati langkah" onClick={timer.skipStep}><ChevronRight size={19}/></button>}</div>}
       <p className="timer-tip"><Clock3 size={15}/> Timer tetap akurat saat kamu berpindah aplikasi.</p>
     </section>}
   </main>;
+}
+
+function BrewScene({method,stepIndex,running,finished,title,caption}) {
+  const sceneClass=`brew-scene scene-${method} phase-${stepIndex} ${running?'is-running':''} ${finished?'is-finished':''}`;
+  return <Card className={sceneClass} aria-label={`Ilustrasi proses ${methodLabel(method)}`}>
+    <div className="scene-copy"><span className="scene-live"><i/> {running?'SEDANG BERLANGSUNG':finished?'SELESAI':method==='cold_brew'?'PANDUAN SEDUH':'PANDUAN LANGKAH'}</span><b>{title}</b><p>{caption}</p></div>
+    <svg className="scene-art" viewBox="0 0 220 116" role="img" aria-label={`${methodLabel(method)}: ${title}`} preserveAspectRatio="xMidYMid meet">
+      <ellipse className="scene-glow" cx="112" cy="91" rx="91" ry="12"/>
+      <path className="scene-table" d="M22 96h176" />
+      {method==='v60'&&<g className="scene-v60">
+        <path className="scene-vessel" d="M37 33h34c5 0 8 4 7 9l-3 22H34l-3-22c-1-5 2-9 6-9z"/><path className="scene-handle" d="M77 40h8c8 0 8 15 0 15h-9"/><path className="scene-spout" d="M37 39 22 49l10 4"/><path className="scene-lid" d="M40 29h27"/>
+        <path className="scene-stream" d="M87 52c14 2 20 7 27 16"/>
+        <path className="scene-filter" d="m105 61 12 27h39l12-27z"/><path className="scene-coffee" d="M112 76h39l-5 12h-29z"/>
+        <path className="scene-carafe" d="M113 88h38l-4 9h-30z"/><path className="scene-cup-rim" d="M108 87h47"/>
+        <g className="scene-bubbles"><circle cx="123" cy="75" r="3"/><circle cx="139" cy="72" r="2"/><circle cx="146" cy="78" r="2.5"/></g>
+      </g>}
+      {(method==='french_press'||method==='aeropress')&&<g className="scene-press">
+        <path className="scene-press-glass" d="M76 37h67l-5 52H82z"/><path className="scene-coffee" d="M80 66h59l-3 21H83z"/>
+        <path className="scene-press-top" d="M70 35h79"/><path className="scene-press-rod" d="M110 19v38"/><path className="scene-press-knob" d="M101 18h18"/>
+        <path className="scene-press-foot" d="M73 92h73"/><path className="scene-press-handle" d="M143 44h10v25h-10"/>
+        <g className="scene-bubbles"><circle cx="94" cy="73" r="3"/><circle cx="119" cy="78" r="2"/></g>
+      </g>}
+      {method==='espresso'&&<g className="scene-espresso">
+        <path className="scene-machine" d="M70 28h82v33h-12v9H88v-9H70z"/><path className="scene-machine-head" d="M91 61h41v9H91z"/>
+        <path className="scene-portafilter" d="M98 69h28l-4 8h-20z"/><path className="scene-stream" d="M105 77v12m14-12v12"/>
+        <path className="scene-cup" d="M96 88h34l-4 9h-26z"/><path className="scene-cup-rim" d="M92 87h42"/>
+        <circle className="scene-indicator" cx="139" cy="40" r="3"/>
+      </g>}
+      {method==='tubruk'&&<g className="scene-tubruk">
+        <path className="scene-cup" d="M80 53h64l-5 39H85z"/><path className="scene-cup-rim" d="M76 53h72"/>
+        <path className="scene-coffee" d="M87 68h50l-2 18H89z"/><path className="scene-handle" d="M144 61h12c9 0 8 19 0 19h-14"/>
+        <path className="scene-stream" d="M109 26v26"/><g className="scene-bubbles"><circle cx="101" cy="71" r="3"/><circle cx="122" cy="77" r="2"/></g>
+      </g>}
+      {method==='moka_pot'&&<g className="scene-moka">
+        <path className="scene-pot-base" d="m77 63 8-24h52l8 24-9 29H86z"/><path className="scene-pot-top" d="m86 39 8-13h34l9 13z"/>
+        <path className="scene-pot-line" d="M84 62h55"/><path className="scene-pot-handle" d="M145 48h11v27h-12"/>
+        <path className="scene-pot-knob" d="M103 25v-6h16v6"/><path className="scene-steam" d="M101 14c-5-5 5-6 0-11m16 11c-5-5 5-6 0-11"/>
+      </g>}
+      {method==='cold_brew'&&<g className="scene-cold">
+        <path className="scene-jar" d="M81 30h58v60a7 7 0 0 1-7 7H88a7 7 0 0 1-7-7z"/><path className="scene-jar-lid" d="M77 27h66v8H77z"/>
+        <path className="scene-coffee" d="M85 57h50v31a4 4 0 0 1-4 4H89a4 4 0 0 1-4-4z"/>
+        <path className="scene-ice" d="m94 44 8-5 7 7-5 8h-8zm24 3 7-5 6 6-4 8h-8z"/>
+        <path className="scene-jar-highlight" d="M89 37v13m0 9v20"/>
+      </g>}
+      <path className="scene-steam scene-steam-one" d="M164 51c-7-7 7-9 0-16m14 16c-7-7 7-9 0-16"/>
+      {finished&&<g className="scene-sparkles"><path d="M173 69v10m-5-5h10M58 67v8m-4-4h8"/></g>}
+    </svg>
+    <span className="scene-method">{methodLabel(method)}</span>
+  </Card>;
 }
 
 function ProfilePage() {
