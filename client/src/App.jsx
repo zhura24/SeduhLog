@@ -71,19 +71,60 @@ function FormErrorSummary({ errors, ids, labels }) {
 function FieldError({ id, error }) { return error ? <small id={id} className="field-error" role="alert">{error}</small> : null; }
 
 function SplashScreen({ onEnter }) {
+  const [phase, setPhase] = useState(0);
+  const steps = [
+    { title: 'Kenali Biji Kopi', description: 'Temukan karakter Biji Kopi pilihanmu.' },
+    { title: 'Nikmati proses seduh', description: 'Racik dengan metode seduh favoritmu.' },
+    { title: 'Simpan cerita rasanya', description: 'Catat rasa dari setiap cangkir.' }
+  ];
+  const nextPhase = () => setPhase(current => (current + 1) % steps.length);
   const trapFocus = event => {
     if (event.key !== 'Tab') return;
-    event.preventDefault();
-    event.currentTarget.querySelector('button')?.focus();
+    const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled)')];
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
-  return <div className="splash-screen" role="dialog" aria-modal="true" aria-labelledby="splash-title" onKeyDown={trapFocus}>
-    <main className="splash-content">
-      <img className="splash-logo" src="/logo.svg" alt=""/>
-      <p className="splash-brand">SeduhLog</p>
-      <h1 id="splash-title">Catat seduhan.<br/><em>Nikmati ceritanya.</em></h1>
-      <p className="splash-description">Jurnal sederhana untuk setiap cangkir kopi favoritmu.</p>
-      <button className="button button-primary splash-enter" type="button" onClick={onEnter} autoFocus>Mulai</button>
-    </main>
+  return <div className={`splash-screen splash-phase-${phase}`} role="dialog" aria-modal="true" aria-labelledby="splash-title" onKeyDown={trapFocus}>
+    <div className="splash-shell">
+      <header className="splash-top">
+        <span className="splash-brand">SeduhLog</span>
+        <button className="splash-skip" type="button" onClick={onEnter}>Lewati</button>
+      </header>
+      <main className="splash-main">
+        <div className="splash-visual">
+          <div className="splash-halo"/>
+          <div className="splash-orbit splash-orbit-one"><BeanIcon size={22}/></div>
+          <div className="splash-orbit splash-orbit-two"><Sparkles size={18}/></div>
+          <div className="splash-bean splash-bean-one"/>
+          <div className="splash-bean splash-bean-two"/>
+          <span className="splash-pour-stream"/>
+          <span className="splash-pour-drop"/>
+          <button className="splash-cup" type="button" onClick={nextPhase} aria-label={`Tahap ${phase + 1}: ${steps[phase].title}. Sentuh untuk tahap berikutnya`}>
+            <img className="splash-cup-logo" src="/logo.svg" alt=""/>
+          </button>
+        </div>
+        <section className="splash-message">
+          <h1 id="splash-title">Setiap cangkir<br/><em>punya cerita.</em></h1>
+          <p className="splash-description" aria-live="polite">{steps[phase].description}</p>
+          <div className="splash-progress" aria-label={`Tahap ${phase + 1} dari ${steps.length}`}>
+            <div className="splash-progress-dots">{steps.map((step, index) =>
+              <button key={step.title} type="button" aria-label={`Lihat tahap ${index + 1}: ${step.title}`} aria-current={index === phase ? 'step' : undefined} onClick={() => setPhase(index)} className={index === phase ? 'active' : ''}/>
+            )}</div>
+          </div>
+          <div className="splash-actions">
+            <button className="button button-primary splash-enter" type="button" onClick={onEnter} autoFocus>Mulai <ArrowRight size={17}/></button>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>;
 }
 
