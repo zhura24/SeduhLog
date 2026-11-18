@@ -77,42 +77,9 @@ function SplashScreen({ onEnter }) {
   const [touchStart, setTouchStart] = useState(null);
 
   const steps = [
-    {
-      tag: '01 / Koleksi Biji',
-      icon: BeanIcon,
-      title: 'Kenali Biji Kopi',
-      emphasis: 'pilihan terbaikmu.',
-      description: 'Eksplorasi asal wilayah, proses pascapanen, varietas, hingga tanggal sangrai untuk menemukan potensi rasa terbaik.',
-      chips: [
-        { text: '🌿 Arabika Gayo', pos: 'chip-left' },
-        { text: '🌋 1.500 mdpl', pos: 'chip-right' },
-        { text: '🍒 Natural Anaerob', pos: 'chip-bottom' }
-      ]
-    },
-    {
-      tag: '02 / Seduh Presisi',
-      icon: TimerIcon,
-      title: 'Nikmati proses seduh',
-      emphasis: 'dengan penuh kendali.',
-      description: 'Kalkulasi rasio seduh otomatis, timer interaktif multi-tahap, dan panduan suhu air untuk ekstraksi yang konsisten.',
-      chips: [
-        { text: '⚖️ Rasio 1:15', pos: 'chip-left' },
-        { text: '⏱️ Timer 02:45', pos: 'chip-right' },
-        { text: '🌡️ 92°C V60 Pour', pos: 'chip-bottom' }
-      ]
-    },
-    {
-      tag: '03 / Cupping Notes',
-      icon: Star,
-      title: 'Simpan cerita rasanya',
-      emphasis: 'di setiap cangkir.',
-      description: 'Dokumentasikan cupping score SCA, aroma, keasaman, aftertaste, hingga rating bintang dalam jurnal personalmu.',
-      chips: [
-        { text: '⭐ Rating 4.9', pos: 'chip-left' },
-        { text: '🌸 Floral & Berry', pos: 'chip-right' },
-        { text: '☕ Cupping Score 88', pos: 'chip-bottom' }
-      ]
-    }
+    { title: 'Kenali Biji Kopi', description: 'Temukan karakter Biji Kopi pilihanmu.' },
+    { title: 'Nikmati proses seduh', description: 'Racik dengan metode seduh favoritmu.' },
+    { title: 'Simpan cerita rasanya', description: 'Catat rasa dari setiap cangkir.' }
   ];
 
   const nextPhase = () => setPhase(current => (current + 1) % steps.length);
@@ -129,7 +96,7 @@ function SplashScreen({ onEnter }) {
     setIsExiting(true);
     setTimeout(() => {
       onEnter();
-    }, 380);
+    }, 320);
   };
 
   const handleTouchStart = e => {
@@ -179,8 +146,6 @@ function SplashScreen({ onEnter }) {
     }
   };
 
-  const CurrentTagIcon = steps[phase].icon;
-
   return <div
     className={`splash-screen splash-phase-${phase} ${isExiting ? 'splash-exiting' : ''}`}
     role="dialog"
@@ -192,10 +157,7 @@ function SplashScreen({ onEnter }) {
   >
     <div className="splash-shell">
       <header className="splash-top">
-        <div className="splash-brand-wrap">
-          <span className="splash-brand">SeduhLog</span>
-          <span className="splash-brand-tag">Coffee Journal</span>
-        </div>
+        <span className="splash-brand">SeduhLog</span>
         <button className="splash-skip" type="button" onClick={handleEnter}>Lewati</button>
       </header>
       <main className="splash-main">
@@ -218,13 +180,6 @@ function SplashScreen({ onEnter }) {
           <div className="splash-bean splash-bean-two"/>
           <span className="splash-pour-stream"/>
           <span className="splash-pour-drop"/>
-          <div className="splash-chips-layer" aria-hidden="true" key={`chips-${phase}`}>
-            {steps[phase].chips.map(chip => (
-              <span key={chip.text} className={`splash-floating-chip ${chip.pos}`}>
-                {chip.text}
-              </span>
-            ))}
-          </div>
           <button
             className="splash-cup"
             type="button"
@@ -232,23 +187,14 @@ function SplashScreen({ onEnter }) {
             aria-label={`Tahap ${phase + 1}: ${steps[phase].title}. Sentuh untuk tahap berikutnya`}
           >
             <img className="splash-cup-logo" src="/logo.svg" alt="SeduhLog Coffee Cup"/>
-            <span className="splash-cup-ripple"/>
           </button>
-          <span className="splash-cup-hint" aria-hidden="true">Sentuh cangkir untuk tahap selanjutnya</span>
         </div>
         <section
           className="splash-message"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          <div className="splash-tag-pill">
-            <CurrentTagIcon size={14} className="splash-tag-icon"/>
-            <span>{steps[phase].tag}</span>
-          </div>
-          <h1 id="splash-title">
-            {steps[phase].title}<br/>
-            <em>{steps[phase].emphasis}</em>
-          </h1>
+          <h1 id="splash-title">Setiap cangkir<br/><em>punya cerita.</em></h1>
           <p className="splash-description" aria-live="polite">{steps[phase].description}</p>
           <div className="splash-progress" aria-label={`Tahap ${phase + 1} dari ${steps.length}`}>
             <div className="splash-progress-dots">{steps.map((step, index) =>
@@ -270,20 +216,11 @@ function SplashScreen({ onEnter }) {
               autoFocus
             >
               {phase === steps.length - 1 ? (
-                <>Mulai Menyeduh <ArrowRight size={17}/></>
+                <>Mulai <ArrowRight size={17}/></>
               ) : (
                 <>Lanjut <ArrowRight size={17}/></>
               )}
             </button>
-            {phase < steps.length - 1 && (
-              <button
-                className="splash-direct-enter"
-                type="button"
-                onClick={handleEnter}
-              >
-                Langsung Masuk
-              </button>
-            )}
           </div>
         </section>
       </main>
