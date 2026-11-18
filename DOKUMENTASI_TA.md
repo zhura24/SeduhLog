@@ -22,7 +22,7 @@ SeduhLog dibuat sebagai **Progressive Web App (PWA)** dengan antarmuka berbahasa
 
 ### Splash Screen dan Onboarding
 
-Saat aplikasi dibuka, splash-screen menampilkan tiga tahap pengenalan SeduhLog. Pengguna dapat berpindah tahap dengan mengetuk ilustrasi cangkir atau indikator tahap, lalu memilih **Lewati** atau **Mulai** untuk masuk ke aplikasi. Ilustrasi cangkir, uap/air seduhan, dan elemen Biji Kopi memiliki animasi. Tata letaknya menyesuaikan ukuran layar: dua kolom pada desktop dan terpusat pada ponsel. Tiga indikator tahap berukuran sama agar tetap simetris; tahap aktif dibedakan dengan warna. Animasi mengikuti preferensi aksesibilitas `prefers-reduced-motion`.
+Saat aplikasi dibuka, splash-screen menampilkan tiga tahap pengenalan SeduhLog. Pengguna dapat berpindah tahap dengan mengetuk ilustrasi cangkir atau indikator tahap, lalu memilih **Lewati** atau **Mulai** untuk masuk ke aplikasi. Ilustrasi cangkir, uap/air seduhan, dan elemen Biji Kopi memiliki animasi. Tata letaknya menyesuaikan ukuran layar: dua kolom pada desktop dan terpusat pada ponsel. Konten utama digeser ke atas sebesar setengah tinggi header agar komposisinya seimbang terhadap bagian layar yang terlihat, baik di desktop maupun ponsel. Tiga indikator tahap berukuran sama agar tetap simetris; tahap aktif dibedakan dengan warna. Animasi mengikuti preferensi aksesibilitas `prefers-reduced-motion`.
 
 ### Beranda
 
