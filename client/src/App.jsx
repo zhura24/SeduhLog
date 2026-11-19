@@ -814,49 +814,67 @@ function BrewScene({method,stepIndex,running,finished,title,caption}) {
   return <Card className={sceneClass} aria-label={`Ilustrasi proses ${methodLabel(method)}`}>
     <div className="scene-copy"><span className="scene-live"><i/> {running?'SEDANG BERLANGSUNG':finished?'SELESAI':method==='cold_brew'?'PANDUAN SEDUH':'PANDUAN LANGKAH'}</span><b>{title}</b><p>{caption}</p></div>
     <svg className={`scene-art scene-art-${method}`} viewBox="0 0 260 170" role="img" aria-label={`${methodLabel(method)}: ${title}`} preserveAspectRatio="xMidYMid meet">
-      <ellipse className="scene-glow" cx="130" cy="159" rx="108" ry="9"/>
-      <path className="scene-table" d="M18 162h224" />
+      <ellipse className="scene-glow" cx="130" cy="154" rx="108" ry="8"/>
+      <path className="scene-table" d="M18 152h224" />
 
-      {/* 1. V60 Pour Over */}
+      {/* 1. V60 Pour Over - Precision Editorial Artwork */}
       {method==='v60'&&<g className="scene-v60">
-        <path className="scene-server" d="M136 102h48l4 14c2 10 18 16 19 28 1 11-20 16-46 16s-47-5-46-16c1-12 17-18 19-28z"/>
-        <path className="scene-server-rim" d="M130 102h60"/>
-        <path className="scene-server-handle" d="M188 114c16-6 28 2 26 16-1 10-9 15-20 14"/>
-        <line x1="148" y1="126" x2="158" y2="126" className="scene-server-line"/>
-        <line x1="146" y1="136" x2="160" y2="136" className="scene-server-line"/>
-        <line x1="144" y1="146" x2="162" y2="146" className="scene-server-line"/>
-        <path className="scene-server-coffee" d="M120 144c22 8 60 8 82 0 3 6 3 11-1 14-20 8-58 8-78 0-4-3-4-8-3-14z"/>
+        <ellipse cx="180" cy="152" rx="48" ry="5.5" className="scene-v60-mat"/>
+
+        {/* Range Server (Glass Decanter) */}
+        <path className="scene-server" d="M166 94 c0 6 -8 18 -12 30 -4 12 -1 24 4 26 a6 6 0 0 0 4 2 h36 a6 6 0 0 0 4 -2 c5 -2 8 -14 4 -26 -4 -12 -12 -24 -12 -30 z"/>
+        <line x1="162" y1="94" x2="202" y2="94" className="scene-server-rim"/>
+        <path className="scene-server-handle" d="M198 102 c16 -1 25 10 23 25 -2 10 -9 15 -18 14"/>
+
+        {/* Server Coffee liquid */}
+        <path className="scene-server-coffee" d="M154 136 c12 4 40 4 52 0 2 6 0 11 -4 13 -6 3 -16 3 -22 3 s-16 0 -22 -3 c-4 -2 -6 -7 -4 -13 z"/>
+
+        {/* Server measurement marks (3 ticks) */}
+        <line x1="174" y1="116" x2="190" y2="116" className="scene-server-mark"/>
+        <line x1="171" y1="126" x2="193" y2="126" className="scene-server-mark"/>
+        <line x1="168" y1="136" x2="196" y2="136" className="scene-server-mark"/>
+
+        {/* V60 Dripper Assembly */}
         <g className="scene-dripper-assembly">
-          <ellipse cx="160" cy="100" rx="34" ry="5" className="scene-v60-base"/>
-          <path className="scene-glass-dripper" d="M124 50c0-10 72-10 72 0l-22 47c-4 4-24 4-28 0z"/>
-          <path className="scene-spiral-ribs" d="M130 52q16 26 26 42m-10-43q18 28 22 43m-2-44q12 24 16 43m10-43q4 22 8 42m14-42q-4 22-2 41m16-41q-14 24-12 40"/>
-          <path className="scene-filter" d="M128 51c0-7 64-7 64 0l-20 42c-4 4-20 4-24 0z"/>
-          <path className="scene-coffee" d="M138 72c8-4 28-4 36 0l-6 16c-6 3-18 3-24 0z"/>
-          <ellipse cx="160" cy="73" rx="18" ry="5" className="scene-bloom-surface"/>
-          <g className="scene-bubbles">
-            <circle cx="152" cy="72" r="3"/>
-            <circle cx="162" cy="70" r="2.5"/>
-            <circle cx="170" cy="73" r="2"/>
-            <circle cx="158" cy="75" r="1.8"/>
+          <rect x="157" y="89" width="48" height="6" rx="3" className="scene-dripper-base"/>
+          <path className="scene-glass-dripper" d="M156 46 l17 43 h16 l17 -43 z"/>
+          <ellipse cx="181" cy="46" rx="25" ry="6" className="scene-glass-dripper-rim"/>
+          <ellipse cx="181" cy="47" rx="22" ry="4.8" className="scene-glass-dripper-inner"/>
+          <path className="scene-filter" d="M159 47 c0 -1 44 -1 44 0 l-14 38 h-16 z"/>
+          <path className="scene-coffee-bed" d="M167 66 l6 18 h16 l6 -18 z"/>
+          <path className="scene-bloom-bed" d="M165 59 c0 -2 32 -2 32 0 l-2 9 c-9 2 -19 2 -28 0 z"/>
+          <g className="scene-bloom-bubbles">
+            <circle cx="174" cy="63" r="2.8" className="scene-bubble b1"/>
+            <circle cx="182" cy="65" r="2.2" className="scene-bubble b2"/>
+            <circle cx="189" cy="62" r="2.6" className="scene-bubble b3"/>
+            <circle cx="178" cy="60.5" r="1.8" className="scene-bubble b4"/>
+            <circle cx="185" cy="67" r="2" className="scene-bubble b5"/>
           </g>
         </g>
-        <g className="scene-drips-group">
-          <line x1="160" y1="102" x2="160" y2="128" className="scene-drip"/>
-          <circle cx="160" cy="120" r="2" className="scene-drip-drop drop-1"/>
-          <circle cx="160" cy="132" r="2.2" className="scene-drip-drop drop-2"/>
-        </g>
-        <g className="scene-kettle-group">
-          <path className="scene-kettle-body" d="M22 72c0-14 12-24 28-24s28 10 28 24l-4 26H26z"/>
-          <path className="scene-kettle-base" d="M24 98h52v4H24z"/>
-          <path className="scene-kettle-lid" d="M36 48v-6h28v6"/>
-          <circle cx="50" cy="38" r="3.5" className="scene-kettle-knob"/>
-          <path className="scene-kettle-handle" d="M72 58c24-2 24 34 0 34"/>
-          <path className="scene-kettle-spout" d="M70 60c14-3 18-16 30-18 8-2 12 4 6 10-8 8-16 14-28 18"/>
-          <path className="scene-stream" d="M106 50 Q134 52 160 72"/>
-        </g>
+
+        {/* Steam Wisps */}
         <g className="scene-steam-wisps">
-          <path d="M152 42q-4-8 2-14t-2-12" className="scene-steam-line s1"/>
-          <path d="M166 40q4-8-2-14t2-12" className="scene-steam-line s2"/>
+          <path d="M174 36 c-4 -8 4 -14 -2 -22" className="scene-steam-line s1"/>
+          <path d="M182 31 c-3 -8 4 -14 -1 -22" className="scene-steam-line s2"/>
+          <path d="M190 36 c-4 -8 4 -14 -2 -22" className="scene-steam-line s3"/>
+        </g>
+
+        {/* Gooseneck Kettle (Angled ~24deg) */}
+        <g className="scene-v60-kettle">
+          <line x1="56" y1="106" x2="98" y2="124" className="scene-kettle-base-rim1"/>
+          <line x1="53" y1="110" x2="95" y2="128" className="scene-kettle-base-rim2"/>
+          <path className="scene-kettle-body" d="M56 106 c-2 -18 6 -38 18 -44 l22 10 c14 6 18 28 2 52 z"/>
+          <path className="scene-kettle-lid" d="M74 62 l4 -8 l14 6 l-4 8 z"/>
+          <circle cx="85" cy="56" r="4.2" className="scene-kettle-knob"/>
+          <path className="scene-kettle-handle" d="M66 65 c-16 -8 -24 4 -22 18 c2 12 12 18 16 18"/>
+          <path className="scene-kettle-spout" d="M96 112 c12 -4 22 -22 34 -38 c12 -16 26 -26 40 -20"/>
+
+          {/* Dual Water Pour Stream */}
+          <g className="scene-v60-stream-group">
+            <path className="scene-v60-stream-flow" d="M168 54 c0 8 4 14 6 20 l5 -1 c-2 -6 -6 -12 -6 -20 z"/>
+            <path className="scene-v60-stream-line l1" d="M168 54 c0 8 4 14 6 20"/>
+            <path className="scene-v60-stream-line l2" d="M173 53 c0 8 4 14 6 20"/>
+          </g>
         </g>
       </g>}
 
