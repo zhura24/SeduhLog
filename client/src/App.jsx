@@ -803,8 +803,6 @@ function RouterApp({toast,setToast,theme,setTheme}) {
 export default function App() {
   const [toast,setToast]=useState({message:'',type:'success'});
   const [theme,setTheme]=useState(()=>localStorage.getItem('seduhlog-theme')||'system');
-  const [showSplash,setShowSplash]=useState(true);
-  const enterApp=()=>setShowSplash(false);
   useLayoutEffect(()=>{
     const root=document.documentElement;
     const media=window.matchMedia('(prefers-color-scheme: dark)');
@@ -815,6 +813,6 @@ export default function App() {
     return()=>media.removeEventListener?.('change',applyTheme);
   },[theme]);
   useEffect(()=>{if(!toast.message)return undefined;const timeout=setTimeout(()=>setToast({message:'',type:'success'}),3500);return()=>clearTimeout(timeout);},[toast]);
-  return <><RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>{showSplash&&<SplashScreen onEnter={enterApp}/>}</>;
+  return <RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>;
 }
 
