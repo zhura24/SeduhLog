@@ -329,27 +329,69 @@ function BeanThumb({ bean, small = false }) {
 }
 
 function AppHome() {
-  const { toast, install, installPrompt } = useOutletContext();
+  const { install, installPrompt } = useOutletContext();
   const stats = useQuery({ queryKey: queryKeys.stats, queryFn: () => fetchData('/stats') });
   const brews = useQuery({ queryKey: [...queryKeys.brews, 'recent'], queryFn: () => fetchData('/brews?limit=3') });
   const value = stats.data || {};
   const method = methodLabel(value.favoriteMethod);
-  return <main>
-    <div className="home-greeting"><div><div className="eyebrow">JURNAL SEDUHMU</div><h1>Selamat {new Date().getHours() < 11 ? 'pagi' : new Date().getHours() < 15 ? 'siang' : 'menikmati sore'}.</h1><p>{new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long'}).format(new Date())}</p></div><div className="greeting-mark"><Coffee size={25}/></div></div>
-    <DataState query={stats}>{value.totalBrews === 0 ? <EmptyState title="Mulai dari satu seduhan" description="Catat racikan pertamamu, lalu temukan pola rasa favoritmu." to="/timer" action="Mulai seduh"/> : <>
-      <div className="stats-grid">
-        <StatCard label="Total seduhan" value={value.totalBrews} icon={Coffee}/>
-        <StatCard label="Rata-rata rating" value={value.avgRating ? `${value.avgRating} / 5` : '—'} icon={Star}/>
-        <StatCard label="Metode favorit" value={method} icon={Flame}/>
-        <StatCard label="Biji Kopi teratas" value={value.topBean?.name || '—'} icon={BeanIcon} detail={value.topBean ? `${value.topBean.count} seduhan` : ''}/>
+  const hour = new Date().getHours();
+  const greeting = hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 18 ? 'Selamat sore' : 'Selamat malam';
+  const today = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+
+  return <main className="home-dashboard">
+    <header className="dashboard-topbar">
+      <Link to="/" className="dashboard-wordmark" aria-label="SeduhLog, beranda"><span><Coffee size={19}/></span><b>SeduhLog</b></Link>
+      <div className="dashboard-date"><span className="live-dot"/> {today}</div>
+      <span className="dashboard-edition">JURNAL RASA · VOL. 01</span>
+    </header>
+
+    <section className="home-hero" aria-labelledby="home-title">
+      <div className="home-hero-copy">
+        <div className="hero-kicker"><span>01</span><span>RITUAL SEDUH HARI INI</span></div>
+        <h1 id="home-title">{greeting},<br/><em>seduh sesuatu.</em></h1>
+        <p>Racik pelan-pelan. Simpan resep, rasa, dan cerita di balik cangkir favoritmu.</p>
+        <Link to="/timer" className="hero-start"><span><TimerIcon size={18}/></span> Mulai seduh <ArrowRight size={17}/></Link>
+        <div className="hero-footnote"><span>CATAT · RACIK · RASAKAN</span><span>01 — 08</span></div>
       </div>
-      <Card className="chart-card"><div className="section-title"><div><div className="eyebrow">KONSISTENSI</div><h2>Seduhan per minggu</h2></div><span className="trend-label"><Activity size={14}/> 8 minggu</span></div><BarChart data={value.brewsPerWeek || []}/></Card>
-      <div className="section-title recent-heading"><div><div className="eyebrow">DARI JURNALMU</div><h2>Seduhan terbaru</h2></div><Link to="/brews" className="text-link">Semua <ArrowRight size={15}/></Link></div>
-      <DataState query={brews}>{brews.data?.length ? brews.data.map(item => <BrewCard key={item.id} brew={item} compact/>) : <div className="empty-inline">Belum ada seduhan tercatat.</div>}</DataState>
+      <figure className="home-hero-photo">
+        <img src="/images/ritual-seduh.png" alt="Seduhan kopi filter di atas meja, ditemani buku catatan rasa" />
+        <figcaption><span>RITUAL PAGI</span><span>SEBUAH JURNAL, SATU CANGKIR</span></figcaption>
+        <span className="photo-stamp" aria-hidden="true">BREW<br/>SLOW</span>
+      </figure>
+    </section>
+
+    <div className="dashboard-section-label"><span>CATATAN PERJALANAN</span><span className="section-rule"/><span>01 / 03</span></div>
+    <DataState query={stats}>{Number(value.totalBrews || 0) === 0 ? <>
+      <section className="first-brew-card" aria-labelledby="first-brew-title">
+        <div className="first-brew-copy"><span className="first-brew-index">MULAI DARI SINI</span><h2 id="first-brew-title">Halaman ini menunggu cerita pertamamu.</h2><p>Tambahkan biji kopi yang sedang kamu pakai, lalu mulai catat karakter seduhannya.</p><Link to="/beans/new" className="first-brew-link">Tambah biji kopi <ArrowRight size={16}/></Link></div>
+        <div className="first-brew-steps" aria-label="Tiga langkah memulai">
+          <div><span>01</span><b>Pilih biji</b><BeanIcon size={17}/></div>
+          <div><span>02</span><b>Atur racikan</b><SlidersHorizontal size={17}/></div>
+          <div><span>03</span><b>Catat rasanya</b><BookOpen size={17}/></div>
+        </div>
+      </section>
+      <div className="home-shortcuts">
+        <Link to="/beans" className="home-shortcut"><span><BeanIcon size={17}/></span><span><b>Jelajahi koleksi biji</b><small>Kenali asal dan prosesnya</small></span><ArrowRight size={16}/></Link>
+        <Link to="/timer" className="home-shortcut"><span><TimerIcon size={17}/></span><span><b>Buka timer seduh</b><small>Panduan untuk ritualmu</small></span><ArrowRight size={16}/></Link>
+      </div>
+    </> : <>
+      <section className="stats-grid" aria-label="Ringkasan jurnal">
+        <StatCard label="Cangkir tercatat" value={value.totalBrews} icon={Coffee}/>
+        <StatCard label="Rasa rata-rata" value={value.avgRating ? `${value.avgRating} / 5` : '—'} icon={Star}/>
+        <StatCard label="Metode andalan" value={method} icon={Flame}/>
+        <StatCard label="Biji paling sering" value={value.topBean?.name || '—'} icon={BeanIcon} detail={value.topBean ? `${value.topBean.count} kali diseduh` : ''}/>
+      </section>
+      <div className="dashboard-columns">
+        <Card className="chart-card dashboard-chart"><div className="section-title"><div><div className="eyebrow">RITME MINGGUAN</div><h2>Setiap cangkir meninggalkan jejak.</h2></div><span className="trend-label"><Activity size={14}/> 8 minggu</span></div><BarChart data={value.brewsPerWeek || []}/><div className="chart-note"><span className="chart-note-dot"/> Jumlah seduhanmu dalam delapan minggu terakhir</div></Card>
+        <aside className="dashboard-side-stack" aria-label="Jelajahi jurnal">
+          <section className="favorite-bean-card"><div className="eyebrow">BIJI YANG PALING SERING</div><div className="favorite-bean-content"><BeanThumb bean={value.topBean}/><div><h2>{value.topBean?.name || 'Belum ada pilihan'}</h2><p>{value.topBean ? `${value.topBean.count} cangkir jadi saksi` : 'Mulai catat biji favoritmu'}</p></div></div><Link to="/beans" className="favorite-bean-link">Lihat koleksi <ArrowRight size={15}/></Link></section>
+          <Link to="/timer" className="quick-brew-card"><span className="quick-brew-mark"><TimerIcon size={21}/></span><span><small>WAKTUNYA MENYEDUH</small><b>Siapkan cangkir berikutnya</b></span><ArrowRight size={17}/></Link>
+        </aside>
+      </div>
+      <section className="recent-section" aria-labelledby="recent-title"><div className="recent-section-head"><div><div className="eyebrow">DARI JURNALMU</div><h2 id="recent-title">Seduhan terbaru</h2></div><Link to="/brews" className="text-link">Buka semua <ArrowRight size={15}/></Link></div><div className="recent-brews-list"><DataState query={brews}>{brews.data?.length ? brews.data.map(item => <BrewCard key={item.id} brew={item} compact/>) : <div className="empty-inline">Belum ada seduhan tercatat.</div>}</DataState></div></section>
     </>}</DataState>
-    <Link to="/timer" className="hero-cta"><span className="hero-icon"><TimerIcon size={22}/></span><span><b>Mulai Seduh</b><small>Timer dan panduan seduh</small></span><ArrowRight size={19}/></Link>
     {installPrompt && <button className="install-inline" onClick={install}><Upload size={16}/> Pasang aplikasi SeduhLog</button>}
-    <footer className="home-footer">Diseduh dengan sabar, dicatat dengan rasa.</footer>
+    <footer className="home-footer"><span>DISUSUN DENGAN SABAR</span><span>Diseduh dengan sabar, dicatat dengan rasa.</span><span>SEDUHLOG · {new Date().getFullYear()}</span></footer>
   </main>;
 }
 function StatCard({ label, value, icon: Icon, detail }) {
