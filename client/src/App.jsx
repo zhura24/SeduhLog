@@ -72,7 +72,6 @@ function FieldError({ id, error }) { return error ? <small id={id} className="fi
 
 function SplashScreen({ onEnter }) {
   const [phase, setPhase] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
 
@@ -84,19 +83,10 @@ function SplashScreen({ onEnter }) {
 
   const nextPhase = () => setPhase(current => (current + 1) % steps.length);
 
-  useEffect(() => {
-    if (isPaused || isExiting) return;
-    const timer = setInterval(() => {
-      setPhase(current => (current + 1) % steps.length);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [isPaused, isExiting, steps.length]);
-
   const handleEnter = () => {
     setIsExiting(true);
-    setTimeout(() => {
-      onEnter();
-    }, 320);
+    const exitDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320;
+    window.setTimeout(onEnter, exitDuration);
   };
 
   const handleTouchStart = e => {
@@ -161,11 +151,7 @@ function SplashScreen({ onEnter }) {
         <button className="splash-skip" type="button" onClick={handleEnter}>Lewati</button>
       </header>
       <main className="splash-main">
-        <div
-          className="splash-visual"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+        <div className="splash-visual">
           <div className="splash-halo"/>
           <div className="splash-steam" aria-hidden="true">
             <span className="splash-steam-wave steam-1"/>
@@ -189,11 +175,7 @@ function SplashScreen({ onEnter }) {
             <img className="splash-cup-logo" src="/logo.svg" alt="SeduhLog Coffee Cup"/>
           </button>
         </div>
-        <section
-          className="splash-message"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+        <section className="splash-message">
           <h1 id="splash-title">Setiap cangkir<br/><em>punya cerita.</em></h1>
           <p className="splash-description" aria-live="polite">{steps[phase].description}</p>
           <div className="splash-progress" aria-label={`Tahap ${phase + 1} dari ${steps.length}`}>
@@ -845,6 +827,7 @@ function RouterApp({toast,setToast,theme,setTheme}) {
 export default function App() {
   const [toast,setToast]=useState({message:'',type:'success'});
   const [theme,setTheme]=useState(()=>localStorage.getItem('seduhlog-theme')||'system');
+  const [showSplash,setShowSplash]=useState(true);
   useLayoutEffect(()=>{
     const root=document.documentElement;
     const media=window.matchMedia('(prefers-color-scheme: dark)');
@@ -855,6 +838,11 @@ export default function App() {
     return()=>media.removeEventListener?.('change',applyTheme);
   },[theme]);
   useEffect(()=>{if(!toast.message)return undefined;const timeout=setTimeout(()=>setToast({message:'',type:'success'}),3500);return()=>clearTimeout(timeout);},[toast]);
-  return <RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>;
+  return <>
+    <div inert={showSplash ? '' : undefined} aria-hidden={showSplash ? 'true' : undefined}>
+      <RouterApp toast={toast} setToast={setToast} theme={theme} setTheme={setTheme}/>
+    </div>
+    {showSplash && <SplashScreen onEnter={() => setShowSplash(false)}/>}
+  </>;
 }
 

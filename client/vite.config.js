@@ -11,7 +11,7 @@ export default defineConfig({
       name: 'SeduhLog', short_name: 'SeduhLog',
       description: 'Jurnal seduh kopi dan cupping notes pribadi',
       lang: 'id', start_url: '/', scope: '/', display: 'standalone',
-      orientation: 'portrait', background_color: '#FAF6F0', theme_color: '#6F4E37',
+      orientation: 'portrait', background_color: '#F4F0E7', theme_color: '#174A3D',
       icons: [
         { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
         { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
