@@ -378,13 +378,13 @@ p { line-height: 1.65; }
 .scene-v60 .scene-bloom-bed { fill: var(--accent); stroke: color-mix(in srgb, var(--accent) 75%, #000); stroke-width: 1.2; }
 .scene-v60 .scene-bubble { fill: var(--accent); stroke: color-mix(in srgb, var(--accent) 80%, #000); stroke-width: 1; }
 
-.scene-v60-kettle { transition: transform 0.6s ease; transform-origin: 75px 115px; }
+.scene-v60-kettle { transition: transform 0.6s ease; transform-origin: 68px 89px; }
 .scene-v60 .scene-kettle-base-rim1, .scene-v60 .scene-kettle-base-rim2 { stroke: var(--primary); stroke-width: 2.6; stroke-linecap: round; }
 .scene-v60 .scene-kettle-body { fill: var(--surface-alt); stroke: var(--primary); stroke-width: 2.8; stroke-linejoin: round; }
 .scene-v60 .scene-kettle-lid { fill: var(--surface-alt); stroke: var(--primary); stroke-width: 2.2; stroke-linejoin: round; }
 .scene-v60 .scene-kettle-knob { fill: var(--accent); stroke: var(--primary); stroke-width: 1.6; }
-.scene-v60 .scene-kettle-handle { fill: none; stroke: var(--primary); stroke-width: 3.2; stroke-linecap: round; }
-.scene-v60 .scene-kettle-spout { fill: none; stroke: var(--primary); stroke-width: 3.2; stroke-linecap: round; }
+.scene-v60 .scene-kettle-handle { fill: none; stroke: var(--primary); stroke-width: 3.4; stroke-linecap: round; }
+.scene-v60 .scene-kettle-spout { fill: var(--surface-alt); stroke: var(--primary); stroke-width: 2.6; stroke-linejoin: round; }
 
 .scene-v60-stream-group { opacity: 0; transition: opacity 0.3s ease; }
 .scene-v60-stream-flow { fill: color-mix(in srgb, var(--primary) 35%, transparent); }
