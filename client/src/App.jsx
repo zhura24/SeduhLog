@@ -72,16 +72,43 @@ function FieldError({ id, error }) { return error ? <small id={id} className="fi
 
 function SplashScreen({ onEnter }) {
   const [phase, setPhase] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
 
   const steps = [
-    { title: 'Kenali Biji Kopi', description: 'Temukan karakter Biji Kopi pilihanmu.' },
-    { title: 'Nikmati proses seduh', description: 'Racik dengan metode seduh favoritmu.' },
-    { title: 'Simpan cerita rasanya', description: 'Catat rasa dari setiap cangkir.' }
+    {
+      badge: '01 • ASAL & BIJI',
+      title: 'Kenali Biji Kopi',
+      heading: 'Setiap cangkir',
+      emphasis: 'punya cerita.',
+      description: 'Temukan karakter Biji Kopi pilihanmu, asal wilayah tanam, hingga profil sangrai terbaik.'
+    },
+    {
+      badge: '02 • SENI SEDUHAN',
+      title: 'Nikmati proses seduh',
+      heading: 'Presisi dalam',
+      emphasis: 'setiap seduhan.',
+      description: 'Racik dengan metode seduh favoritmu, kalkulasi rasio otomatis, dan timer interaktif.'
+    },
+    {
+      badge: '03 • JURNAL RASA',
+      title: 'Simpan cerita rasanya',
+      heading: 'Abadikan jejak',
+      emphasis: 'di setiap cangkir.',
+      description: 'Catat cupping notes, aroma, keasaman, aftertaste, hingga rating bintang dalam jurnal personalmu.'
+    }
   ];
 
   const nextPhase = () => setPhase(current => (current + 1) % steps.length);
+
+  useEffect(() => {
+    if (isPaused || isExiting) return;
+    const timer = setInterval(() => {
+      setPhase(current => (current + 1) % steps.length);
+    }, 4800);
+    return () => clearInterval(timer);
+  }, [isPaused, isExiting, steps.length]);
 
   const handleEnter = () => {
     setIsExiting(true);
@@ -147,11 +174,18 @@ function SplashScreen({ onEnter }) {
   >
     <div className="splash-shell">
       <header className="splash-top">
-        <span className="splash-brand">SeduhLog</span>
+        <div className="splash-brand-wrap">
+          <span className="splash-brand">SeduhLog</span>
+          <span className="splash-brand-edition">EDISI PWA</span>
+        </div>
         <button className="splash-skip" type="button" onClick={handleEnter}>Lewati</button>
       </header>
       <main className="splash-main">
-        <div className="splash-visual">
+        <div
+          className="splash-visual"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           <div className="splash-halo"/>
           <div className="splash-steam" aria-hidden="true">
             <span className="splash-steam-wave steam-1"/>
@@ -159,11 +193,9 @@ function SplashScreen({ onEnter }) {
             <span className="splash-steam-wave steam-3"/>
           </div>
           <div className="splash-orbit splash-orbit-one">
-            {phase === 0 ? <BeanIcon size={22}/> : phase === 1 ? <Flame size={20}/> : <Star size={20}/>}
+            {phase === 0 ? <BeanIcon size={20}/> : phase === 1 ? <Flame size={20}/> : <Star size={20}/>}
           </div>
-          <div className="splash-orbit splash-orbit-two"><Sparkles size={18}/></div>
-          <div className="splash-bean splash-bean-one"/>
-          <div className="splash-bean splash-bean-two"/>
+          <div className="splash-orbit splash-orbit-two"><Sparkles size={16}/></div>
           <span className="splash-pour-stream"/>
           <span className="splash-pour-drop"/>
           <button
@@ -172,11 +204,26 @@ function SplashScreen({ onEnter }) {
             onClick={nextPhase}
             aria-label={`Tahap ${phase + 1}: ${steps[phase].title}. Sentuh untuk tahap berikutnya`}
           >
-            <img className="splash-cup-logo" src="/logo.svg" alt="SeduhLog Coffee Cup"/>
+            <svg className="splash-cup-art" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="70" cy="116" rx="52" ry="11" className="splash-art-saucer-shadow" />
+              <ellipse cx="70" cy="113" rx="46" ry="9" className="splash-art-saucer" />
+              <ellipse cx="70" cy="112" rx="32" ry="5.5" className="splash-art-saucer-inner" />
+              <path d="M38 52 C38 90 48 106 70 106 C92 106 102 90 102 52 Z" className="splash-art-cup" />
+              <path d="M100 58 C116 58 122 72 120 84 C118 94 108 96 98 94" className="splash-art-handle" />
+              <path d="M100 64 C111 64 115 73 113 81 C112 88 105 89 98 88" className="splash-art-handle-inner" />
+              <ellipse cx="70" cy="52" rx="32" ry="8" className="splash-art-rim" />
+              <ellipse cx="70" cy="53" rx="28" ry="6.5" className="splash-art-coffee" />
+              <path d="M64 51 C64 49 67 48 70 51 C73 48 76 49 76 51 C76 54 70 56 70 56 C70 56 64 54 64 51 Z" className="splash-art-crema" />
+            </svg>
           </button>
         </div>
-        <section className="splash-message">
-          <h1 id="splash-title">Setiap cangkir<br/><em>punya cerita.</em></h1>
+        <section
+          className="splash-message"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <span className="splash-step-badge">{steps[phase].badge}</span>
+          <h1 id="splash-title">{steps[phase].heading}<br/><em>{steps[phase].emphasis}</em></h1>
           <p className="splash-description" aria-live="polite">{steps[phase].description}</p>
           <div className="splash-progress" aria-label={`Tahap ${phase + 1} dari ${steps.length}`}>
             <div className="splash-progress-dots">{steps.map((step, index) =>
@@ -192,13 +239,13 @@ function SplashScreen({ onEnter }) {
           </div>
           <div className="splash-actions">
             <button
-              className="button button-primary splash-enter"
+              className="button splash-enter"
               type="button"
               onClick={phase === steps.length - 1 ? handleEnter : nextPhase}
               autoFocus
             >
               {phase === steps.length - 1 ? (
-                <>Mulai <ArrowRight size={17}/></>
+                <>Mulai Menyeduh <ArrowRight size={17}/></>
               ) : (
                 <>Lanjut <ArrowRight size={17}/></>
               )}
@@ -722,58 +769,195 @@ function BrewScene({method,stepIndex,running,finished,title,caption}) {
     <svg className={`scene-art scene-art-${method}`} viewBox="0 0 260 170" role="img" aria-label={`${methodLabel(method)}: ${title}`} preserveAspectRatio="xMidYMid meet">
       <ellipse className="scene-glow" cx="130" cy="159" rx="108" ry="9"/>
       <path className="scene-table" d="M18 162h224" />
+
+      {/* 1. V60 Pour Over */}
       {method==='v60'&&<g className="scene-v60">
-        <path className="scene-server" d="M137 103h54l2 15c1 8 18 18 19 29 1 10-21 14-48 14s-49-4-48-14c1-11 18-21 19-29z"/>
-        <path className="scene-server-handle" d="M192 116c17-8 31 1 30 15-1 11-10 18-22 16"/>
-        <path className="scene-server-coffee" d="M120 145c24 9 64 9 88 0 4 7 4 12-1 15-22 9-64 9-86 0-5-3-5-8-1-15z"/>
-        <path className="scene-server-rim" d="M129 103h70"/>
-        <g transform="translate(29.25 0) scale(.82 1)">
-          <path className="scene-v60-base" d="M119 91h91v11c-8 7-20 9-45 9s-38-2-46-9z"/>
-          <path className="scene-glass-dripper" d="M104 43c0-11 117-11 117 0l-30 49c-12 8-45 8-57 0z"/>
-          <path className="scene-ridge" d="m108 45 30 45m-19-47 28 47m-14-49 20 49m-6-49 11 49m9-49-2 49m15-48-10 47m23-45-18 44"/>
-          <path className="scene-filter" d="M111 44c0-8 103-8 103 0l-27 42c-9 6-40 6-49 0z"/>
-          <path className="scene-coffee" d="M133 69c13-5 34-5 47 0l-8 15c-8 4-23 4-31 0z"/>
-          <path className="scene-bloom-surface" d="M135 71c6-6 10 4 16-1s10 4 15-1 9 4 12 1"/>
-          <path className="scene-filter-rim" d="M111 44c0-8 103-8 103 0"/>
-          <path className="scene-dripper-rim" d="M102 43c0-13 121-13 121 0s-121 13-121 0z"/>
-          <path className="scene-dripper-base" d="M132 94c10 7 44 7 54 0"/>
+        <path className="scene-server" d="M136 102h48l4 14c2 10 18 16 19 28 1 11-20 16-46 16s-47-5-46-16c1-12 17-18 19-28z"/>
+        <path className="scene-server-rim" d="M130 102h60"/>
+        <path className="scene-server-handle" d="M188 114c16-6 28 2 26 16-1 10-9 15-20 14"/>
+        <line x1="148" y1="126" x2="158" y2="126" className="scene-server-line"/>
+        <line x1="146" y1="136" x2="160" y2="136" className="scene-server-line"/>
+        <line x1="144" y1="146" x2="162" y2="146" className="scene-server-line"/>
+        <path className="scene-server-coffee" d="M120 144c22 8 60 8 82 0 3 6 3 11-1 14-20 8-58 8-78 0-4-3-4-8-3-14z"/>
+        <g className="scene-dripper-assembly">
+          <ellipse cx="160" cy="100" rx="34" ry="5" className="scene-v60-base"/>
+          <path className="scene-glass-dripper" d="M124 50c0-10 72-10 72 0l-22 47c-4 4-24 4-28 0z"/>
+          <path className="scene-spiral-ribs" d="M130 52q16 26 26 42m-10-43q18 28 22 43m-2-44q12 24 16 43m10-43q4 22 8 42m14-42q-4 22-2 41m16-41q-14 24-12 40"/>
+          <path className="scene-filter" d="M128 51c0-7 64-7 64 0l-20 42c-4 4-20 4-24 0z"/>
+          <path className="scene-coffee" d="M138 72c8-4 28-4 36 0l-6 16c-6 3-18 3-24 0z"/>
+          <ellipse cx="160" cy="73" rx="18" ry="5" className="scene-bloom-surface"/>
+          <g className="scene-bubbles">
+            <circle cx="152" cy="72" r="3"/>
+            <circle cx="162" cy="70" r="2.5"/>
+            <circle cx="170" cy="73" r="2"/>
+            <circle cx="158" cy="75" r="1.8"/>
+          </g>
         </g>
-        <path className="scene-kettle-body" d="M20 68c0-13 10-22 26-22s26 9 26 22l-5 25H25z"/>
-        <path className="scene-kettle-handle" d="M66 58c22-2 22 29 0 29"/>
-        <path className="scene-kettle-spout" d="M64 57c13-2 16-12 26-15 7-2 11 3 6 8-7 7-14 12-25 16"/>
-        <path className="scene-kettle-lid" d="M34 44v-5h23v5m-15-5v-4h7v4"/>
-        <path className="scene-stream" d="M97 46c17 3 27 14 43 21 6 3 11 4 17 5"/>
-        <path className="scene-drip" d="M163 105v23"/>
-        <g className="scene-bubbles"><circle cx="139" cy="68" r="3"/><circle cx="156" cy="66" r="2.5"/><circle cx="174" cy="70" r="2"/></g>
+        <g className="scene-drips-group">
+          <line x1="160" y1="102" x2="160" y2="128" className="scene-drip"/>
+          <circle cx="160" cy="120" r="2" className="scene-drip-drop drop-1"/>
+          <circle cx="160" cy="132" r="2.2" className="scene-drip-drop drop-2"/>
+        </g>
+        <g className="scene-kettle-group">
+          <path className="scene-kettle-body" d="M22 72c0-14 12-24 28-24s28 10 28 24l-4 26H26z"/>
+          <path className="scene-kettle-base" d="M24 98h52v4H24z"/>
+          <path className="scene-kettle-lid" d="M36 48v-6h28v6"/>
+          <circle cx="50" cy="38" r="3.5" className="scene-kettle-knob"/>
+          <path className="scene-kettle-handle" d="M72 58c24-2 24 34 0 34"/>
+          <path className="scene-kettle-spout" d="M70 60c14-3 18-16 30-18 8-2 12 4 6 10-8 8-16 14-28 18"/>
+          <path className="scene-stream" d="M106 50 Q134 52 160 72"/>
+        </g>
+        <g className="scene-steam-wisps">
+          <path d="M152 42q-4-8 2-14t-2-12" className="scene-steam-line s1"/>
+          <path d="M166 40q4-8-2-14t2-12" className="scene-steam-line s2"/>
+        </g>
       </g>}
-      {(method==='french_press'||method==='aeropress')&&<g className="scene-press" transform="translate(0 9) scale(1.45)">
-        <path className="scene-press-glass" d="M76 37h67l-5 52H82z"/><path className="scene-coffee" d="M80 66h59l-3 21H83z"/>
-        <path className="scene-press-top" d="M70 35h79"/><path className="scene-press-rod" d="M110 19v38"/><path className="scene-press-knob" d="M101 18h18"/>
-        <path className="scene-press-foot" d="M73 92h73"/><path className="scene-press-handle" d="M143 44h10v25h-10"/>
-        <g className="scene-bubbles"><circle cx="94" cy="73" r="3"/><circle cx="119" cy="78" r="2"/></g>
+
+      {/* 2. French Press */}
+      {method==='french_press'&&<g className="scene-french-press">
+        <rect x="96" y="38" width="68" height="116" rx="4" className="scene-press-glass"/>
+        <path d="M96 38h-6v116h6" className="scene-press-frame"/>
+        <path d="M164 38h6v116h-6" className="scene-press-frame"/>
+        <path d="M90 152h80v4H90z" className="scene-press-base-foot"/>
+        <path d="M94 76h72 M94 118h72" className="scene-press-bands"/>
+        <path d="M166 58c20-2 22 42 0 42" className="scene-press-handle"/>
+        <path d="M94 38l-8 6h8" className="scene-press-spout"/>
+        <rect x="98" y="70" width="64" height="82" className="scene-coffee"/>
+        <rect x="98" y="134" width="64" height="18" className="scene-press-grounds"/>
+        <g className="scene-plunger-group">
+          <line x1="130" y1="16" x2="130" y2="70" className="scene-press-rod"/>
+          <ellipse cx="130" cy="14" rx="10" ry="6" className="scene-press-knob"/>
+          <path d="M92 36h76v6H92z" className="scene-press-lid"/>
+          <rect x="98" y="68" width="64" height="6" rx="2" className="scene-press-filter-mesh"/>
+        </g>
+        <g className="scene-bubbles">
+          <circle cx="114" cy="88" r="3"/>
+          <circle cx="146" cy="98" r="2.5"/>
+          <circle cx="128" cy="112" r="3.2"/>
+        </g>
+        <g className="scene-steam-wisps">
+          <path d="M92 28q-4-8 2-14" className="scene-steam-line s1"/>
+          <path d="M102 24q4-8-2-14" className="scene-steam-line s2"/>
+        </g>
       </g>}
-      {method==='espresso'&&<g className="scene-espresso" transform="translate(0 9) scale(1.45)">
-        <path className="scene-machine" d="M70 28h82v33h-12v9H88v-9H70z"/><path className="scene-machine-head" d="M91 61h41v9H91z"/>
-        <path className="scene-portafilter" d="M98 69h28l-4 8h-20z"/><path className="scene-stream" d="M105 77v12m14-12v12"/>
-        <path className="scene-cup" d="M96 88h34l-4 9h-26z"/><path className="scene-cup-rim" d="M92 87h42"/>
-        <circle className="scene-indicator" cx="139" cy="40" r="3"/>
+
+      {/* 3. AeroPress */}
+      {method==='aeropress'&&<g className="scene-aeropress">
+        <path d="M100 114c0 28 8 40 30 40s30-12 30-40z" className="scene-aero-mug"/>
+        <ellipse cx="130" cy="114" rx="29" ry="6" className="scene-aero-mug-rim"/>
+        <path d="M160 122c14-2 16 22 0 22" className="scene-aero-mug-handle"/>
+        <ellipse cx="130" cy="120" rx="24" ry="5" className="scene-coffee"/>
+        <rect x="110" y="104" width="40" height="10" rx="2" className="scene-aero-cap"/>
+        <ellipse cx="130" cy="104" rx="24" ry="4" className="scene-aero-flange"/>
+        <rect x="114" y="44" width="32" height="60" className="scene-aero-chamber"/>
+        <text x="122" y="62" className="scene-aero-num">4</text>
+        <text x="122" y="74" className="scene-aero-num">3</text>
+        <text x="122" y="86" className="scene-aero-num">2</text>
+        <text x="122" y="98" className="scene-aero-num">1</text>
+        <rect x="115" y="72" width="30" height="32" className="scene-aero-coffee"/>
+        <g className="scene-aero-plunger-group">
+          <rect x="115" y="66" width="30" height="7" rx="2" className="scene-aero-seal"/>
+          <rect x="118" y="24" width="24" height="44" className="scene-aero-plunger-body"/>
+          <ellipse cx="130" cy="22" rx="16" ry="5" className="scene-aero-plunger-top"/>
+        </g>
+        <line x1="130" y1="110" x2="130" y2="124" className="scene-stream"/>
+        <g className="scene-steam-wisps">
+          <path d="M122 18q-3-6 2-12" className="scene-steam-line s1"/>
+          <path d="M138 18q3-6-2-12" className="scene-steam-line s2"/>
+        </g>
       </g>}
-      {method==='tubruk'&&<g className="scene-tubruk" transform="translate(0 9) scale(1.45)">
-        <path className="scene-cup" d="M80 53h64l-5 39H85z"/><path className="scene-cup-rim" d="M76 53h72"/>
-        <path className="scene-coffee" d="M87 68h50l-2 18H89z"/><path className="scene-handle" d="M144 61h12c9 0 8 19 0 19h-14"/>
-        <path className="scene-stream" d="M109 26v26"/><g className="scene-bubbles"><circle cx="101" cy="71" r="3"/><circle cx="122" cy="77" r="2"/></g>
+
+      {/* 4. Espresso Machine */}
+      {method==='espresso'&&<g className="scene-espresso">
+        <rect x="80" y="24" width="100" height="48" rx="4" className="scene-espresso-body"/>
+        <line x1="80" y1="62" x2="180" y2="62" className="scene-espresso-trim"/>
+        <circle cx="106" cy="42" r="12" className="scene-gauge-face"/>
+        <circle cx="106" cy="42" r="1.5" className="scene-gauge-pin"/>
+        <line x1="106" y1="42" x2="114" y2="38" className="scene-gauge-needle"/>
+        <circle cx="162" cy="42" r="4" className="scene-indicator-light"/>
+        <rect x="115" y="70" width="30" height="10" rx="2" className="scene-grouphead"/>
+        <path d="M120 78h20l-2 10h-16z" className="scene-portafilter-basket"/>
+        <path d="M138 82l38 6" className="scene-portafilter-handle"/>
+        <path d="M124 88v6 M136 88v6" className="scene-espresso-spouts"/>
+        <line x1="124" y1="94" x2="124" y2="122" className="scene-stream stream-left"/>
+        <line x1="136" y1="94" x2="136" y2="122" className="scene-stream stream-right"/>
+        <ellipse cx="130" cy="148" rx="28" ry="6" className="scene-saucer"/>
+        <path d="M112 116c0 20 6 28 18 28s18-8 18-28z" className="scene-demitasse"/>
+        <ellipse cx="130" cy="116" rx="17" ry="4" className="scene-demitasse-rim"/>
+        <ellipse cx="130" cy="118" rx="14" ry="3.5" className="scene-crema"/>
+        <path d="M148 122c8-1 10 12 0 12" className="scene-demitasse-handle"/>
+        <g className="scene-steam-wisps">
+          <path d="M126 108q-4-8 2-16" className="scene-steam-line s1"/>
+          <path d="M134 108q4-8-2-16" className="scene-steam-line s2"/>
+        </g>
       </g>}
-      {method==='moka_pot'&&<g className="scene-moka" transform="translate(0 9) scale(1.45)">
-        <path className="scene-pot-base" d="m77 63 8-24h52l8 24-9 29H86z"/><path className="scene-pot-top" d="m86 39 8-13h34l9 13z"/>
-        <path className="scene-pot-line" d="M84 62h55"/><path className="scene-pot-handle" d="M145 48h11v27h-12"/>
-        <path className="scene-pot-knob" d="M103 25v-6h16v6"/><path className="scene-steam" d="M101 14c-5-5 5-6 0-11m16 11c-5-5 5-6 0-11"/>
+
+      {/* 5. Tubruk */}
+      {method==='tubruk'&&<g className="scene-tubruk">
+        <ellipse cx="130" cy="150" rx="46" ry="10" className="scene-tubruk-saucer"/>
+        <ellipse cx="130" cy="148" rx="36" ry="7" className="scene-tubruk-saucer-rim"/>
+        <path d="M98 76c0 54 8 70 32 70s32-16 32-70z" className="scene-tubruk-mug"/>
+        <ellipse cx="130" cy="76" rx="32" ry="7" className="scene-tubruk-rim"/>
+        <path d="M98 78c4 6 56 6 64 0" className="scene-tubruk-stripe"/>
+        <path d="M162 88c18-4 20 38 0 38" className="scene-tubruk-handle"/>
+        <ellipse cx="130" cy="84" rx="28" ry="6" className="scene-coffee"/>
+        <path d="M112 83q10 3 18-1t18 2" className="scene-tubruk-crema"/>
+        <line x1="148" y1="46" x2="124" y2="120" className="scene-spoon"/>
+        <ellipse cx="149" cy="44" rx="4" ry="7" transform="rotate(22 149 44)" className="scene-spoon-head"/>
+        <path d="M114 30 Q124 45 128 80" className="scene-stream"/>
+        <g className="scene-bubbles">
+          <circle cx="120" cy="83" r="2.5"/>
+          <circle cx="136" cy="85" r="3"/>
+          <circle cx="126" cy="87" r="2"/>
+        </g>
+        <g className="scene-steam-wisps">
+          <path d="M118 64q-6-12 3-22t-3-18" className="scene-steam-line s1"/>
+          <path d="M136 60q6-12-3-22t3-18" className="scene-steam-line s2"/>
+        </g>
       </g>}
-      {method==='cold_brew'&&<g className="scene-cold" transform="translate(0 9) scale(1.45)">
-        <path className="scene-jar" d="M81 30h58v60a7 7 0 0 1-7 7H88a7 7 0 0 1-7-7z"/><path className="scene-jar-lid" d="M77 27h66v8H77z"/>
-        <path className="scene-coffee" d="M85 57h50v31a4 4 0 0 1-4 4H89a4 4 0 0 1-4-4z"/>
-        <path className="scene-ice" d="m94 44 8-5 7 7-5 8h-8zm24 3 7-5 6 6-4 8h-8z"/>
-        <path className="scene-jar-highlight" d="M89 37v13m0 9v20"/>
+
+      {/* 6. Moka Pot */}
+      {method==='moka_pot'&&<g className="scene-moka">
+        <ellipse cx="130" cy="156" rx="28" ry="5" className="scene-moka-heat"/>
+        <path d="M106 114l6-36h36l6 36l-8 36h-32z" className="scene-moka-boiler"/>
+        <line x1="112" y1="114" x2="148" y2="114" className="scene-moka-waist"/>
+        <circle cx="144" cy="128" r="3" className="scene-moka-valve"/>
+        <path d="M112 76l-8-38h52l-8 38z" className="scene-moka-pitcher"/>
+        <path d="M104 38l-10 8h10" className="scene-moka-spout"/>
+        <path d="M104 38l26-10l26 10z" className="scene-moka-lid"/>
+        <ellipse cx="130" cy="24" rx="4" ry="4" className="scene-moka-knob"/>
+        <path d="M152 48c18 2 20 54 0 58" className="scene-moka-handle"/>
+        <line x1="120" y1="40" x2="122" y2="74" className="scene-moka-facet"/>
+        <line x1="140" y1="40" x2="138" y2="74" className="scene-moka-facet"/>
+        <line x1="122" y1="80" x2="120" y2="148" className="scene-moka-facet"/>
+        <line x1="138" y1="80" x2="140" y2="148" className="scene-moka-facet"/>
+        <g className="scene-steam-wisps">
+          <path d="M92 34q-6-8 2-16t-2-12" className="scene-steam-line s1"/>
+          <path d="M130 18q-3-6 2-12" className="scene-steam-line s2"/>
+        </g>
       </g>}
+
+      {/* 7. Cold Brew */}
+      {method==='cold_brew'&&<g className="scene-cold-brew">
+        <rect x="98" y="44" width="64" height="108" rx="8" className="scene-cold-jar"/>
+        <path d="M104 44v-8h52v8" className="scene-cold-neck"/>
+        <rect x="100" y="32" width="60" height="8" rx="2" className="scene-cold-cap"/>
+        <line x1="104" y1="70" x2="114" y2="70" className="scene-cold-scale"/>
+        <line x1="104" y1="86" x2="118" y2="86" className="scene-cold-scale"/>
+        <line x1="104" y1="102" x2="114" y2="102" className="scene-cold-scale"/>
+        <line x1="104" y1="118" x2="118" y2="118" className="scene-cold-scale"/>
+        <rect x="100" y="62" width="60" height="88" rx="4" className="scene-coffee"/>
+        <g className="scene-ice-cubes">
+          <path d="M112 70l12-6l10 8l-10 8z" className="scene-ice cube-1"/>
+          <path d="M132 76l10-5l8 7l-8 7z" className="scene-ice cube-2"/>
+          <path d="M120 92l10-6l10 7l-8 8z" className="scene-ice cube-3"/>
+        </g>
+        <ellipse cx="106" cy="95" rx="1.5" ry="3" className="scene-cold-droplet d1"/>
+        <ellipse cx="154" cy="88" rx="1.2" ry="2.5" className="scene-cold-droplet d2"/>
+        <ellipse cx="148" cy="118" rx="1.8" ry="4" className="scene-cold-droplet d3"/>
+        <circle cx="130" cy="56" r="2.5" className="scene-slow-drip"/>
+      </g>}
+
       <path className="scene-steam scene-steam-one" d="M193 51c-7-7 7-9 0-16m14 16c-7-7 7-9 0-16"/>
       {finished&&<g className="scene-sparkles"><path d="M173 69v10m-5-5h10M58 67v8m-4-4h8"/></g>}
     </svg>
