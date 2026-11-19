@@ -70,6 +70,30 @@ function FormErrorSummary({ errors, ids, labels }) {
 }
 function FieldError({ id, error }) { return error ? <small id={id} className="field-error" role="alert">{error}</small> : null; }
 
+const GRINDER_BEANS = [
+  { id: 1, left: '5%', size: 22, delay: 0, duration: 760, rot: 190, roast: '#3b2014' },
+  { id: 2, left: '12%', size: 18, delay: 60, duration: 710, rot: -220, roast: '#4f2b1b' },
+  { id: 3, left: '19%', size: 26, delay: 130, duration: 830, rot: 250, roast: '#2e180d' },
+  { id: 4, left: '27%', size: 20, delay: 30, duration: 730, rot: -160, roast: '#5a3420' },
+  { id: 5, left: '35%', size: 24, delay: 90, duration: 770, rot: 290, roast: '#3f2316' },
+  { id: 6, left: '42%', size: 17, delay: 160, duration: 690, rot: -200, roast: '#4b2817' },
+  { id: 7, left: '50%', size: 25, delay: 40, duration: 790, rot: 210, roast: '#331a0e' },
+  { id: 8, left: '57%', size: 19, delay: 110, duration: 720, rot: -270, roast: '#58321e' },
+  { id: 9, left: '65%', size: 27, delay: 80, duration: 850, rot: 230, roast: '#2c160c' },
+  { id: 10, left: '73%', size: 21, delay: 150, duration: 740, rot: -190, roast: '#442517' },
+  { id: 11, left: '81%', size: 24, delay: 20, duration: 800, rot: 260, roast: '#3c2115' },
+  { id: 12, left: '89%', size: 18, delay: 100, duration: 700, rot: -240, roast: '#522f1c' },
+  { id: 13, left: '96%', size: 22, delay: 170, duration: 760, rot: 310, roast: '#32190f' },
+  { id: 14, left: '8%', size: 20, delay: 200, duration: 720, rot: -180, roast: '#4a2818' },
+  { id: 15, left: '23%', size: 28, delay: 170, duration: 860, rot: 200, roast: '#261208' },
+  { id: 16, left: '46%', size: 21, delay: 220, duration: 750, rot: -250, roast: '#5c3521' },
+  { id: 17, left: '62%', size: 24, delay: 190, duration: 780, rot: 280, roast: '#381e13' },
+  { id: 18, left: '78%', size: 19, delay: 240, duration: 710, rot: -210, roast: '#482717' },
+  { id: 19, left: '92%', size: 25, delay: 210, duration: 820, rot: 270, roast: '#341d11' },
+  { id: 20, left: '33%', size: 23, delay: 250, duration: 770, rot: -230, roast: '#462719' },
+  { id: 21, left: '69%', size: 22, delay: 260, duration: 790, rot: 220, roast: '#2f170d' },
+];
+
 function SplashScreen({ onEnter }) {
   const [phase, setPhase] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -111,8 +135,9 @@ function SplashScreen({ onEnter }) {
   }, [isPaused, isExiting, steps.length]);
 
   const handleEnter = () => {
+    if (isExiting) return;
     setIsExiting(true);
-    const exitDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320;
+    const exitDuration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 920;
     window.setTimeout(onEnter, exitDuration);
   };
 
@@ -172,6 +197,28 @@ function SplashScreen({ onEnter }) {
     onTouchStart={handleTouchStart}
     onTouchEnd={handleTouchEnd}
   >
+    {isExiting && (
+      <div className="splash-grinder-cascade" aria-hidden="true">
+        {GRINDER_BEANS.map(b => (
+          <div
+            key={b.id}
+            className="grinder-bean-drop"
+            style={{
+              left: b.left,
+              '--fall-dur': `${b.duration}ms`,
+              '--fall-delay': `${b.delay}ms`,
+              '--fall-rot': `${b.rot}deg`,
+            }}
+          >
+            <svg viewBox="0 0 24 30" width={b.size} height={Math.round(b.size * 1.25)}>
+              <path d="M12 2C6.5 2 2 7.8 2 15s4.5 13 10 13 10-5.8 10-13S17.5 2 12 2z" fill={b.roast} />
+              <path d="M12 5.5c-2.2 4.5 1.8 9.5 0 14s-1.8 5 0 5" stroke="#180b05" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.8" />
+              <path d="M6 9c1-3 4-4.5 6-4.5" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+            </svg>
+          </div>
+        ))}
+      </div>
+    )}
     <div className="splash-shell">
       <header className="splash-top">
         <div className="splash-brand-wrap">

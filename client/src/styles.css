@@ -611,7 +611,51 @@ p { line-height: 1.65; }
   --splash-muted: #95ada2;
   background: radial-gradient(ellipse at 50% 38%, #1b362c 0%, #101b18 56%, #0a110f 100%);
 }
-.splash-screen.splash-exiting { opacity: 0; transform: scale(1.03); filter: blur(4px); pointer-events: none; }
+.splash-screen.splash-exiting {
+  opacity: 0;
+  transform: scale(0.985);
+  pointer-events: none;
+  transition: opacity .5s cubic-bezier(0.4, 0, 0.2, 1) .28s, transform .5s ease .28s;
+}
+.splash-screen.splash-exiting .splash-shell {
+  transform: translateY(18px);
+  filter: blur(2px);
+  transition: transform .42s ease .1s, filter .42s ease .1s;
+}
+
+/* Grinder Cascade (Coffee beans tumbling down on enter) */
+.splash-grinder-cascade {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 150;
+  overflow: hidden;
+}
+
+.grinder-bean-drop {
+  position: absolute;
+  top: -65px;
+  will-change: transform, opacity;
+  animation: grinder-bean-fall var(--fall-dur, 750ms) cubic-bezier(0.42, 0.08, 0.58, 1) var(--fall-delay, 0ms) forwards;
+  filter: drop-shadow(0 6px 10px rgba(12, 18, 15, 0.45));
+}
+
+@keyframes grinder-bean-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.85);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(100dvh + 100px)) rotate(var(--fall-rot, 240deg)) scale(1.08);
+    opacity: 0.95;
+  }
+}
 .splash-shell { grid-row: 1 / 3; width: min(100%, calc(1200px + clamp(40px, 8vw, 128px))); height: 100%; margin-inline: auto; padding-inline: clamp(20px, 4vw, 64px); display: grid; grid-template-rows: 96px minmax(0,1fr); }
 .splash-top { display: flex; align-items: center; justify-content: space-between; }
 .splash-brand-wrap { display: flex; align-items: baseline; gap: 8px; }
