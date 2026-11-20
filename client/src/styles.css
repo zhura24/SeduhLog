@@ -1217,7 +1217,7 @@ h2 { font-size: 21px; line-height: 1.14; }
 /* True visual centre: left 2 items get 3fr each, right 3 items get 2fr each
    so total left = 6fr, right = 6fr → FAB lands at the visual midpoint      */
 .bottom-nav {
-  grid-template-columns: repeat(2, 3fr) auto repeat(3, 2fr) !important;
+  grid-template-columns: repeat(2, minmax(0, 3fr)) 58px repeat(3, minmax(0, 2fr)) !important;
   align-items: center;
 }
 
@@ -1225,20 +1225,18 @@ h2 { font-size: 21px; line-height: 1.14; }
   display: flex;
   align-items: center;
   justify-content: center;
-  /* equal horizontal breathing room */
-  padding: 0 8px;
+  width: 58px;
+  justify-self: center;
   flex-shrink: 0;
 }
 
 .nav-fab {
-  /* perfectly square container so icon never drifts */
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   padding: 0;
   border-radius: 17px;
   /* Liquid glass pill */
@@ -1274,8 +1272,6 @@ h2 { font-size: 21px; line-height: 1.14; }
   height: 24px;
   flex-shrink: 0;
   color: var(--primary);
-  /* remove any browser default line-height shift */
-  line-height: 0;
 }
 :root[data-theme="dark"] .nav-fab svg { color: #a4c7ae; }
 
