@@ -1210,26 +1210,38 @@ h2 { font-size: 21px; line-height: 1.14; }
 
 /* ============================================================
    NAV-FAB — Centre pill button inside bottom nav
+   Symmetric: 2 items | FAB (auto, equal padding both sides) | 3 items
+   FAB is visually centred by giving left side extra compensating weight
    ============================================================ */
-/* Nav needs 6 columns: 2 items | FAB | 3 items */
-.bottom-nav { grid-template-columns: repeat(2,1fr) auto repeat(3,1fr) !important; align-items: center; }
+
+/* True visual centre: left 2 items get 3fr each, right 3 items get 2fr each
+   so total left = 6fr, right = 6fr → FAB lands at the visual midpoint      */
+.bottom-nav {
+  grid-template-columns: repeat(2, 3fr) auto repeat(3, 2fr) !important;
+  align-items: center;
+}
 
 .nav-fab-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 6px;
+  /* equal horizontal breathing room */
+  padding: 0 8px;
+  flex-shrink: 0;
 }
 
 .nav-fab {
+  /* perfectly square container so icon never drifts */
   position: relative;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
-  color: #fff;
-  /* Liquid glass pill with SVG filter */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border-radius: 17px;
+  /* Liquid glass pill */
   background: hsl(0 0% 100% / var(--glass-frost, 0.08));
   -webkit-backdrop-filter: var(--glass-filter-id) blur(20px) saturate(1.5);
   backdrop-filter: var(--glass-filter-id) blur(20px) saturate(1.5);
@@ -1241,6 +1253,8 @@ h2 { font-size: 21px; line-height: 1.14; }
   transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
   overflow: hidden;
 }
+
+/* Shimmer — absolute so it never affects icon layout */
 .nav-fab::before {
   content: '';
   position: absolute;
@@ -1248,13 +1262,33 @@ h2 { font-size: 21px; line-height: 1.14; }
   border-radius: inherit;
   background: linear-gradient(145deg, rgba(255,255,255,0.35) 0%, transparent 55%, rgba(255,255,255,0.10) 100%);
   pointer-events: none;
+  z-index: 0;
 }
-.nav-fab svg { position: relative; z-index: 1; color: var(--primary); }
+
+/* Icon sits above shimmer, perfectly centred by parent flex */
+.nav-fab svg {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: var(--primary);
+  /* remove any browser default line-height shift */
+  line-height: 0;
+}
 :root[data-theme="dark"] .nav-fab svg { color: #a4c7ae; }
-.nav-fab:hover { transform: scale(1.08); box-shadow: inset 0 0 2px 1px rgba(255,255,255,0.55), inset 0 0 10px 4px rgba(255,255,255,0.22), 0 10px 28px rgba(24,59,50,0.28); }
+
+.nav-fab:hover {
+  transform: scale(1.08);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255,255,255,0.55),
+    inset 0 0 10px 4px rgba(255,255,255,0.22),
+    0 10px 28px rgba(24,59,50,0.28);
+}
 .nav-fab:active { transform: scale(0.96); }
 
-/* Hide old floating .fab (kept as fallback component) */
+/* Hide old floating .fab */
 .fab { display: none; }
 
 /* ============================================================

@@ -401,7 +401,7 @@ function BottomNav() {
       {/* Centre FAB pill */}
       <div className="nav-fab-wrap">
         <Link to={fabTo} className="nav-fab" aria-label={fabLabel}>
-          <Plus size={24} strokeWidth={2.2}/>
+          <Plus size={22} strokeWidth={2.5}/>
         </Link>
       </div>
       {tabs.slice(2,5).map(({to,label,icon:Icon,end}) =>
