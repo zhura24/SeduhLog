@@ -798,7 +798,7 @@ p { line-height: 1.65; }
 .splash-progress-dots button::after { width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--splash-muted) 45%, transparent); content: ""; transition: background .25s ease, transform .25s ease; }
 .splash-progress-dots button.active::after { background: var(--accent); transform: scale(1.3); }
 .splash-actions { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-.button.splash-enter { width: min(100%, 360px); min-height: 50px; border: 1px solid color-mix(in srgb,var(--glass-border) 72%,var(--accent)); border-radius: 16px; color: #fff; background: linear-gradient(135deg,color-mix(in srgb,var(--accent) 86%,#fff) 0%,var(--accent) 56%,color-mix(in srgb,var(--accent) 76%,#351e16) 100%); backdrop-filter: blur(18px) saturate(1.35); -webkit-backdrop-filter: blur(18px) saturate(1.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.36), inset 0 -1px 0 rgba(0,0,0,.12), 0 10px 24px color-mix(in srgb,var(--accent) 32%,transparent); font-size: 15px; font-weight: 700; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.button.splash-enter { position: relative; isolation: isolate; overflow: hidden; width: min(100%, 360px); min-height: 50px; border: 1px solid color-mix(in srgb,var(--glass-border) 72%,var(--accent)); border-radius: 16px; color: #fff; background: linear-gradient(135deg,color-mix(in srgb,var(--accent) 86%,#fff) 0%,var(--accent) 56%,color-mix(in srgb,var(--accent) 76%,#351e16) 100%); backdrop-filter: blur(18px) saturate(1.35); -webkit-backdrop-filter: blur(18px) saturate(1.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.36), inset 0 -1px 0 rgba(0,0,0,.12), 0 10px 24px color-mix(in srgb,var(--accent) 32%,transparent); font-size: 15px; font-weight: 700; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
 .splash-enter:hover { transform: translateY(-2px); box-shadow: 0 14px 28px color-mix(in srgb, var(--accent) 45%, transparent); filter: brightness(1.04); }
 .splash-enter:active { transform: translateY(0); box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 30%, transparent); }
 @keyframes splash-reveal { from { opacity: 0; } to { opacity: 1; } }
@@ -1182,11 +1182,28 @@ h2 { font-size: 21px; line-height: 1.14; }
     0 0 0 3px color-mix(in srgb,var(--primary) 12%,transparent);
 }
 .button.sticky-save {
+  position: sticky;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 58px;
   border-radius: 17px;
   font-size: 14px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -1px 0 rgba(0,0,0,.12),
     0 10px 24px color-mix(in srgb,var(--primary) 24%,transparent);
+}
+.liquid-glass-shader {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.button.sticky-save > :not(.liquid-glass-shader),
+.splash-enter > :not(.liquid-glass-shader) {
+  position: relative;
+  z-index: 1;
 }
 
 /* -- Cards -- */
@@ -1260,10 +1277,23 @@ h2 { font-size: 21px; line-height: 1.14; }
 
 /* -- Page header -- */
 .page-header {
-  background: color-mix(in srgb, var(--background) 78%, transparent) !important;
-  backdrop-filter: blur(18px) saturate(var(--glass-saturation));
-  -webkit-backdrop-filter: blur(18px) saturate(var(--glass-saturation));
-  border-bottom-color: var(--glass-border) !important;
+  background: transparent !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom-color: transparent !important;
+}
+.page-header .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.page-header .eyebrow::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--accent) 45%, transparent);
+  content: "";
 }
 
 /* -- Brew & quick brew cards -- */

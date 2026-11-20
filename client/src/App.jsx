@@ -8,6 +8,7 @@ import { calculateRatio, grindLabel, methodLabel, methods } from './lib/methods.
 import { useBrewTimer } from './hooks/useBrewTimer.js';
 import { profile } from './config/profile.js';
 import { getBeanImage, BEAN_IMAGE_PRESETS, prepareBeanImage } from './lib/beanImages.js';
+import LiquidGlassShader from './components/LiquidGlassShader.jsx';
 
 const queryKeys = { beans: ['beans'], brews: ['brews'], stats: ['stats'], methods: ['methods'], archive: ['archive'] };
 const fetchData = async path => (await api(path)).data;
@@ -291,10 +292,11 @@ function SplashScreen({ onEnter }) {
               onClick={phase === steps.length - 1 ? handleEnter : nextPhase}
               autoFocus
             >
+              <LiquidGlassShader/>
               {phase === steps.length - 1 ? (
-                <>Mulai Menyeduh <ArrowRight size={17}/></>
+                <><span>Mulai Menyeduh</span> <ArrowRight size={17}/></>
               ) : (
-                <>Lanjut <ArrowRight size={17}/></>
+                <><span>Lanjut</span> <ArrowRight size={17}/></>
               )}
             </button>
           </div>
@@ -346,6 +348,7 @@ function AppLayout({ toast, setToast, theme, setTheme }) {
   const context = { toast: notify, install, installPrompt, isStandalone, isIos, online, theme, setTheme };
 
   return <div className={`app-shell ${showInstallBanner ? 'has-install-banner' : ''}`}>
+    <LiquidGlassFilter id="lg-nav"/>
     {!online && <div className="network-banner"><WifiOff size={15} /> Mode offline · Timer dan kalkulator tetap tersedia</div>}
     {needRefresh[0] && <button className="update-banner" onClick={() => updateServiceWorker(true)}>Versi baru tersedia, Muat ulang <ArrowRight size={16} /></button>}
     <div className="page-frame"><Outlet context={context} /></div>
@@ -389,7 +392,6 @@ function BottomNav() {
   ];
   return (
     <nav className="bottom-nav" aria-label="Navigasi utama">
-      <LiquidGlassFilter id="lg-nav"/>
       {tabs.map(({to,label,icon:Icon,end}) =>
         <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>
           {({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
@@ -906,7 +908,7 @@ function BeanForm() {
     </div>
     <div className="field"><label htmlFor="bean-flavors">Catatan rasa (maks. 8)</label><div className="chip-entry"><input id="bean-flavors" aria-invalid={Boolean(errors.flavorNotes)} aria-describedby={errors.flavorNotes?'bean-flavors-error':undefined} value={flavor} onChange={e=>setFlavor(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addFlavor();}}} placeholder="Ketik lalu tekan Enter"/><button type="button" onClick={addFlavor}><Plus size={17}/></button></div><FieldError id="bean-flavors-error" error={errors.flavorNotes}/><div className="chip-list">{form.flavorNotes.map(item=><button type="button" className="taste-chip removable" key={item} onClick={()=>set('flavorNotes',form.flavorNotes.filter(x=>x!==item))}>{item}<X size={13}/></button>)}</div></div>
     <div className="field"><label htmlFor="bean-notes">Catatan tambahan</label><textarea id="bean-notes" maxLength="500" rows="3" aria-invalid={Boolean(errors.notes)} aria-describedby={errors.notes?'bean-notes-error':undefined} value={form.notes||''} onChange={e=>set('notes',e.target.value)}/><FieldError id="bean-notes-error" error={errors.notes}/></div>
-    <button className="button button-primary sticky-save" disabled={save.isPending||imageBusy}>{save.isPending?'Menyimpan...':imageBusy?'Memproses foto...':'Simpan Biji Kopi'} <Check size={18}/></button>
+    <button className="button button-primary sticky-save" disabled={save.isPending||imageBusy}><LiquidGlassShader/><span>{save.isPending?'Menyimpan...':imageBusy?'Memproses foto...':'Simpan Biji Kopi'}</span> <Check size={18}/></button>
   </form>}</main>;
 }
 
@@ -970,7 +972,7 @@ function BrewForm() {
     <div className="field"><label htmlFor="brew-taste">Tag rasa</label><div className="chip-list suggestion-list">{['Cokelat','Karamel','Buah beri','Jeruk','Floral','Kacang','Rempah','Manis madu','Earthy','Asam segar'].map(item=><Chip key={item} selected={form.tasteTags.includes(item)} onClick={()=>form.tasteTags.includes(item)?update('tasteTags',form.tasteTags.filter(x=>x!==item)):addTaste(item)}>{item}</Chip>)}</div><div className="chip-entry"><input id="brew-taste" aria-invalid={Boolean(errors.tasteTags)} aria-describedby={errors.tasteTags?'brew-taste-error':undefined} value={taste} onChange={e=>setTaste(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addTaste();}}} placeholder="Tag lainnya..."/><button type="button" onClick={()=>addTaste()}><Plus size={17}/></button></div><FieldError id="brew-taste-error" error={errors.tasteTags}/></div>
     <div className="field"><label htmlFor="brew-notes">Catatan</label><textarea id="brew-notes" maxLength="1000" rows="4" aria-invalid={Boolean(errors.notes)} aria-describedby={errors.notes?'brew-notes-error':undefined} value={form.notes||''} onChange={e=>update('notes',e.target.value)} placeholder="Apa yang kamu rasakan?"/><FieldError id="brew-notes-error" error={errors.notes}/></div>
     <div className="field"><label htmlFor="brewed-at">Tanggal dan waktu</label><input id="brewed-at" type="datetime-local" aria-invalid={Boolean(errors.brewedAt)} aria-describedby={errors.brewedAt?'brewed-at-error':undefined} value={form.brewedAt} onChange={e=>update('brewedAt',e.target.value)}/><FieldError id="brewed-at-error" error={errors.brewedAt}/></div>
-    <button className="button button-primary sticky-save" disabled={save.isPending}>{save.isPending?'Menyimpan...':'Simpan seduhan'} <Check size={18}/></button>
+    <button className="button button-primary sticky-save" disabled={save.isPending}><LiquidGlassShader/><span>{save.isPending?'Menyimpan...':'Simpan seduhan'}</span> <Check size={18}/></button>
   </form>}</main>;
 }
 
