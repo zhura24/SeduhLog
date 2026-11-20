@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { BrowserRouter, Link, NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -224,7 +224,6 @@ function SplashScreen({ onEnter }) {
       <header className="splash-top">
         <div className="splash-brand-wrap">
           <span className="splash-brand">SeduhLog</span>
-          <span className="splash-brand-edition">EDISI PWA</span>
         </div>
         <button className="splash-skip" type="button" onClick={handleEnter}>Lewati</button>
       </header>
@@ -326,6 +325,7 @@ function AppLayout({ toast, setToast, theme, setTheme }) {
   const isForm = /\/(new|edit)$/.test(location.pathname);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const showInstallBanner = !isForm && !isStandalone && installPrompt && installBanner && location.pathname === '/';
   const notify = (message, type = 'success') => setToast({ message, type });
   useEffect(() => {
     fetchData('/health').catch(() => {});
@@ -345,12 +345,13 @@ function AppLayout({ toast, setToast, theme, setTheme }) {
   const dismissBanner = () => { localStorage.setItem('seduhlog-install-dismissed', '1'); setInstallBanner(false); };
   const context = { toast: notify, install, installPrompt, isStandalone, isIos, online, theme, setTheme };
 
-  return <div className="app-shell">
+  return <div className={`app-shell ${showInstallBanner ? 'has-install-banner' : ''}`}>
     {!online && <div className="network-banner"><WifiOff size={15} /> Mode offline · Timer dan kalkulator tetap tersedia</div>}
     {needRefresh[0] && <button className="update-banner" onClick={() => updateServiceWorker(true)}>Versi baru tersedia, Muat ulang <ArrowRight size={16} /></button>}
     <div className="page-frame"><Outlet context={context} /></div>
     {!isForm && <BottomNav />}
-    {!isForm && !isStandalone && installPrompt && installBanner && location.pathname === '/' && <div className="install-banner"><span><Coffee size={18} /> Pasang SeduhLog di perangkatmu</span><button onClick={install}>Pasang</button><button aria-label="Tutup" onClick={dismissBanner}><X size={16}/></button></div>}
+    {!isForm && <QuickAddFab />}
+    {showInstallBanner && <div className="install-banner"><span><Coffee size={18} /> Pasang SeduhLog di perangkatmu</span><button onClick={install}>Pasang</button><button aria-label="Tutup" onClick={dismissBanner}><X size={16}/></button></div>}
     {iosInstall && !isStandalone && <InstallSheet onClose={() => setIosInstall(false)} />}
     {toast.message && <div className={`toast ${toast.type === 'error' ? 'toast-error' : ''}`} role="status">{toast.type === 'error' ? <CircleHelp size={18}/> : <Check size={18}/>} {toast.message}<button aria-label="Tutup notifikasi" onClick={() => setToast({message:'',type:'success'})}><X size={16}/></button></div>}
     <button className="sr-only" onClick={() => queryClient.clear()}>Bersihkan cache</button>
@@ -379,7 +380,6 @@ function LiquidGlassFilter({ id = 'lg-filter-main' }) {
 }
 
 function BottomNav() {
-  const location = useLocation();
   const tabs = [
     { to: '/', label: 'Beranda', icon: Home, end: true },
     { to: '/brews', label: 'Seduhan', icon: BookOpen },
@@ -387,29 +387,165 @@ function BottomNav() {
     { to: '/timer', label: 'Timer', icon: TimerIcon },
     { to: '/profile', label: 'Profil', icon: MoreHorizontal }
   ];
-  /* Decide FAB destination from current tab */
-  const fabTo = location.pathname.startsWith('/beans') ? '/beans/new' : '/brews/new';
-  const fabLabel = location.pathname.startsWith('/beans') ? 'Tambah Biji Kopi' : 'Tambah seduhan';
   return (
     <nav className="bottom-nav" aria-label="Navigasi utama">
       <LiquidGlassFilter id="lg-nav"/>
-      {tabs.slice(0,2).map(({to,label,icon:Icon,end}) =>
-        <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>
-          {({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
-        </NavLink>
-      )}
-      {/* Centre FAB pill */}
-      <div className="nav-fab-wrap">
-        <Link to={fabTo} className="nav-fab" aria-label={fabLabel}>
-          <Plus size={22} strokeWidth={2.5}/>
-        </Link>
-      </div>
-      {tabs.slice(2,5).map(({to,label,icon:Icon,end}) =>
+      {tabs.map(({to,label,icon:Icon,end}) =>
         <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>
           {({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
         </NavLink>
       )}
     </nav>
+  );
+}
+
+function QuickAddFab() {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState(() => {
+    const saved = localStorage.getItem('seduhlog-quick-add-position');
+    if (!saved) return null;
+    const [x, y] = saved.split(',').map(Number);
+    return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+  });
+  const [popoverPosition, setPopoverPosition] = useState(null);
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+  const dragRef = useRef(null);
+  const draggedRef = useRef(false);
+
+  const clampPosition = ({ x, y }) => ({
+    x: Math.max(8, Math.min(x, window.innerWidth - 60)),
+    y: Math.max(8, Math.min(y, window.innerHeight - 60))
+  });
+
+  useEffect(() => {
+    const keepOnScreen = () => {
+      setPosition(current => current ? clampPosition(current) : null);
+      setOpen(false);
+    };
+    window.addEventListener('resize', keepOnScreen);
+    return () => window.removeEventListener('resize', keepOnScreen);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsideClick = event => {
+      if (!menuRef.current?.contains(event.target)) setOpen(false);
+    };
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  const startDrag = event => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      origin: position || { x: rect.left, y: rect.top },
+      moved: false
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = event => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(deltaX, deltaY) < 5) return;
+    drag.moved = true;
+    draggedRef.current = true;
+    setOpen(false);
+    setPosition(clampPosition({ x: drag.origin.x + deltaX, y: drag.origin.y + deltaY }));
+  };
+
+  const finishDrag = event => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (drag.moved) {
+      const position = clampPosition({
+        x: drag.origin.x + event.clientX - drag.startX,
+        y: drag.origin.y + event.clientY - drag.startY
+      });
+      setPosition(position);
+      localStorage.setItem('seduhlog-quick-add-position', `${position.x},${position.y}`);
+    }
+    dragRef.current = null;
+  };
+
+  const cancelDrag = () => {
+    dragRef.current = null;
+    draggedRef.current = false;
+  };
+
+  const togglePopover = () => {
+    if (draggedRef.current) {
+      draggedRef.current = false;
+      return;
+    }
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    const rect = buttonRef.current.getBoundingClientRect();
+    const width = Math.min(280, window.innerWidth - 32);
+    const left = Math.max(16, Math.min(rect.left + (rect.width - width) / 2, window.innerWidth - width - 16));
+    const openAbove = window.innerHeight - rect.bottom < 184 && rect.top > 184;
+    setPopoverPosition({
+      left,
+      top: openAbove ? 'auto' : rect.bottom + 12,
+      bottom: openAbove ? window.innerHeight - rect.top + 12 : 'auto'
+    });
+    setOpen(true);
+  };
+
+  return (
+    <div className="quick-add" ref={menuRef} style={position ? {left: position.x, top: position.y, right: 'auto', bottom: 'auto'} : undefined}>
+      {open && (
+        <div className="quick-add-popover" id="quick-add-popover" role="group" aria-labelledby="quick-add-title" style={popoverPosition}>
+          <span className="quick-add-heading" id="quick-add-title">BUAT CATATAN</span>
+          <Link className="quick-add-option" to="/brews/new" onClick={() => setOpen(false)}>
+            <span className="quick-add-option-icon"><Coffee size={18}/></span>
+            <span className="quick-add-option-copy"><b>Tambah Seduhan</b><small>Catat resep dan rasa</small></span>
+            <ChevronRight size={17}/>
+          </Link>
+          <Link className="quick-add-option" to="/beans/new" onClick={() => setOpen(false)}>
+            <span className="quick-add-option-icon"><BeanIcon size={18}/></span>
+            <span className="quick-add-option-copy"><b>Tambah Biji Kopi</b><small>Lengkapi koleksi kopimu</small></span>
+            <ChevronRight size={17}/>
+          </Link>
+        </div>
+      )}
+      <button
+        className={`fab ${open ? 'is-open' : ''}`}
+        type="button"
+        ref={buttonRef}
+        aria-label={open ? 'Tutup pilihan tambah' : 'Buka pilihan tambah'}
+        aria-describedby="quick-add-drag-hint"
+        aria-expanded={open}
+        aria-controls={open ? 'quick-add-popover' : undefined}
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={finishDrag}
+        onPointerCancel={cancelDrag}
+        onClick={togglePopover}
+      >
+        <Plus size={24} strokeWidth={2.2}/>
+      </button>
+      <span className="sr-only" id="quick-add-drag-hint">Tekan dan seret untuk memindahkan tombol.</span>
+    </div>
   );
 }
 
@@ -440,8 +576,6 @@ function DataState({ query, children, empty = 'Belum ada data.' }) {
 function EmptyState({ title, description, to, action = 'Mulai mencatat' }) {
   return <div className="empty-hero"><div className="empty-art"><Coffee size={40}/><Sparkles size={20}/></div><h2>{title}</h2><p>{description}</p>{to && <Link className="button button-primary" to={to}><Plus size={18}/>{action}</Link>}</div>;
 }
-function Fab({ to, label }) { return <Link to={to} className="fab" aria-label={label}><Plus size={25}/></Link>; }
-
 function BeanThumb({ bean, small = false }) {
   const imageUrl = getBeanImage(bean);
   const [imgError, setImgError] = useState(false);
@@ -557,7 +691,7 @@ function BrewList() {
     initialPageParam: 1, getNextPageParam: last => last.meta.page < last.meta.totalPages ? last.meta.page + 1 : undefined
   });
   const items = query.data?.pages.flatMap(page => page.data) || [];
-  return <main><PageHeader title="Jurnal seduhan" eyebrow="RACIKAN & RASA" action={<Link className="header-add" to="/brews/new" aria-label="Tambah seduhan"><Plus/></Link>}/>
+  return <main><PageHeader title="Jurnal seduhan" eyebrow="RACIKAN & RASA"/>
     <label className="search-box"><Search size={18}/><input aria-label="Cari seduhan" placeholder="Cari catatan atau rasa..." value={search} onChange={event => setSearch(event.target.value)}/>{search && <button aria-label="Hapus pencarian" onClick={() => setSearch('')}><X size={16}/></button>}</label>
     <div className="filter-row">{methods.map(item => <Chip key={item.method} selected={method === item.method} onClick={() => setMethod(method === item.method ? '' : item.method)}>{item.label}</Chip>)}</div>
     <div className="list-tools"><button className={`favorite-filter ${favorite ? 'selected' : ''}`} onClick={() => setFavorite(!favorite)}><Heart size={16} fill={favorite ? 'currentColor' : 'none'}/> Favorit</button><select aria-label="Urutkan seduhan" value={sort} onChange={event => setSort(event.target.value)}><option value="newest">Terbaru</option><option value="oldest">Terlama</option><option value="rating">Rating tertinggi</option></select></div>
@@ -577,7 +711,7 @@ function BeanList() {
     initialPageParam: 1, getNextPageParam: last => last.meta.page < last.meta.totalPages ? last.meta.page + 1 : undefined
   });
   const items = query.data?.pages.flatMap(page => page.data) || [];
-  return <main><PageHeader title="Koleksi Biji Kopi" eyebrow="ASAL & KARAKTER" action={<Link className="header-add" to="/beans/new" aria-label="Tambah Biji Kopi"><Plus/></Link>}/>
+  return <main><PageHeader title="Koleksi Biji Kopi" eyebrow="ASAL & KARAKTER"/>
     <label className="search-box"><Search size={18}/><input aria-label="Cari Biji Kopi" placeholder="Nama, asal, atau roaster..." value={search} onChange={event => setSearch(event.target.value)}/></label>
     <div className="filter-row">{[['washed','Washed'],['natural','Natural'],['honey','Honey'],['anaerobic','Anaerobic']].map(([value,label])=><Chip key={value} selected={process===value} onClick={()=>setProcess(process===value?'':value)}>{label}</Chip>)}</div>
     <div className="filter-row compact-filter">{[['light','Light'],['medium','Medium'],['dark','Dark']].map(([value,label])=><Chip key={value} selected={roast===value} onClick={()=>setRoast(roast===value?'':value)}>{label} roast</Chip>)}</div>
