@@ -7,6 +7,7 @@ import { api, jsonBody, ApiError } from './lib/api.js';
 import { calculateRatio, grindLabel, methodLabel, methods } from './lib/methods.js';
 import { useBrewTimer } from './hooks/useBrewTimer.js';
 import { profile } from './config/profile.js';
+import { getBeanImage, BEAN_IMAGE_PRESETS } from './lib/beanImages.js';
 
 const queryKeys = { beans: ['beans'], brews: ['brews'], stats: ['stats'], methods: ['methods'], archive: ['archive'] };
 const fetchData = async path => (await api(path)).data;
@@ -399,8 +400,10 @@ function EmptyState({ title, description, to, action = 'Mulai mencatat' }) {
 function Fab({ to, label }) { return <Link to={to} className="fab" aria-label={label}><Plus size={25}/></Link>; }
 
 function BeanThumb({ bean, small = false }) {
-  return bean?.imageUrl
-    ? <img className={`bean-thumb ${small ? 'small' : ''}`} src={bean.imageUrl} alt={bean.name}/>
+  const imageUrl = getBeanImage(bean);
+  const [imgError, setImgError] = useState(false);
+  return imageUrl && !imgError
+    ? <img className={`bean-thumb ${small ? 'small' : ''}`} src={imageUrl} alt={bean?.name || 'Biji kopi'} loading="lazy" onError={() => setImgError(true)}/>
     : <div className={`bean-thumb bean-placeholder ${small ? 'small' : ''}`} aria-label={bean?.name || 'Biji kopi'}>{(bean?.name || 'S').slice(0,1).toUpperCase()}</div>;
 }
 
@@ -692,7 +695,24 @@ function BeanForm() {
     <div className="field-row"><div className="field"><label htmlFor="bean-process">Proses</label><select id="bean-process" aria-invalid={Boolean(errors.process)} aria-describedby={errors.process?'bean-process-error':undefined} value={form.process} onChange={e=>set('process',e.target.value)}>{['washed','natural','honey','anaerobic','lainnya'].map(x=><option key={x} value={x}>{x}</option>)}</select><FieldError id="bean-process-error" error={errors.process}/></div><div className="field"><label htmlFor="bean-roast">Level sangrai</label><select id="bean-roast" aria-invalid={Boolean(errors.roastLevel)} aria-describedby={errors.roastLevel?'bean-roast-error':undefined} value={form.roastLevel} onChange={e=>set('roastLevel',e.target.value)}>{['light','medium','dark'].map(x=><option key={x} value={x}>{x}</option>)}</select><FieldError id="bean-roast-error" error={errors.roastLevel}/></div></div>
     <div className="field-row"><div className="field"><label htmlFor="bean-variety">Varietas</label><input id="bean-variety" value={form.variety||''} onChange={e=>set('variety',e.target.value)}/></div><div className="field"><label htmlFor="bean-altitude">Ketinggian (mdpl)</label><input id="bean-altitude" type="number" min="0" max="3000" aria-invalid={Boolean(errors.altitudeMasl)} aria-describedby={errors.altitudeMasl?'bean-altitude-error':undefined} value={form.altitudeMasl} onChange={e=>set('altitudeMasl',e.target.value)}/><FieldError id="bean-altitude-error" error={errors.altitudeMasl}/></div></div>
     <div className="field"><label htmlFor="bean-roast-date">Tanggal sangrai</label><input id="bean-roast-date" type="date" aria-invalid={Boolean(errors.roastDate)} aria-describedby={errors.roastDate?'bean-roast-date-error':undefined} value={form.roastDate||''} onChange={e=>set('roastDate',e.target.value)}/><FieldError id="bean-roast-date-error" error={errors.roastDate}/></div>
-    <div className="field"><label htmlFor="bean-image">URL gambar (opsional)</label><input id="bean-image" type="url" aria-invalid={Boolean(errors.imageUrl)} aria-describedby={errors.imageUrl?'bean-image-error':undefined} value={form.imageUrl||''} onChange={e=>set('imageUrl',e.target.value)} placeholder="https://..."/><FieldError id="bean-image-error" error={errors.imageUrl}/></div>
+    <div className="field">
+      <label htmlFor="bean-image">URL gambar (opsional)</label>
+      {form.imageUrl&&<div className="bean-image-preview"><img src={form.imageUrl} alt="Preview gambar biji kopi" loading="lazy" onError={e=>{e.target.style.display='none';}}/></div>}
+      <input id="bean-image" type="url" aria-invalid={Boolean(errors.imageUrl)} aria-describedby={errors.imageUrl?'bean-image-error':undefined} value={form.imageUrl||''} onChange={e=>set('imageUrl',e.target.value)} placeholder="https://..."/>
+      <FieldError id="bean-image-error" error={errors.imageUrl}/>
+      <div className="bean-image-presets">
+        <span>Atau pilih dari koleksi gambar:</span>
+        <div className="preset-grid">
+          {BEAN_IMAGE_PRESETS.map(preset=>(
+            <button key={preset.id} type="button" className={`preset-thumb${form.imageUrl===preset.url?' selected':''}`} onClick={()=>set('imageUrl',preset.url)} title={preset.description} aria-label={preset.name}>
+              <img src={preset.url} alt={preset.name} loading="lazy"/>
+              {form.imageUrl===preset.url&&<span className="preset-check">✓</span>}
+            </button>
+          ))}
+        </div>
+        {form.imageUrl&&<button type="button" className="preset-clear" onClick={()=>set('imageUrl','')}>✕ Hapus pilihan gambar</button>}
+      </div>
+    </div>
     <div className="field"><label htmlFor="bean-flavors">Catatan rasa (maks. 8)</label><div className="chip-entry"><input id="bean-flavors" aria-invalid={Boolean(errors.flavorNotes)} aria-describedby={errors.flavorNotes?'bean-flavors-error':undefined} value={flavor} onChange={e=>setFlavor(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addFlavor();}}} placeholder="Ketik lalu tekan Enter"/><button type="button" onClick={addFlavor}><Plus size={17}/></button></div><FieldError id="bean-flavors-error" error={errors.flavorNotes}/><div className="chip-list">{form.flavorNotes.map(item=><button type="button" className="taste-chip removable" key={item} onClick={()=>set('flavorNotes',form.flavorNotes.filter(x=>x!==item))}>{item}<X size={13}/></button>)}</div></div>
     <div className="field"><label htmlFor="bean-notes">Catatan tambahan</label><textarea id="bean-notes" maxLength="500" rows="3" aria-invalid={Boolean(errors.notes)} aria-describedby={errors.notes?'bean-notes-error':undefined} value={form.notes||''} onChange={e=>set('notes',e.target.value)}/><FieldError id="bean-notes-error" error={errors.notes}/></div>
     <button className="button button-primary sticky-save" disabled={save.isPending}>{save.isPending?'Menyimpan...':'Simpan Biji Kopi'} <Check size={18}/></button>

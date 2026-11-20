@@ -28,6 +28,7 @@ const beans = [
     altitudeMasl: 1400,
     restDays: 5,
     flavorNotes: ['Cokelat', 'Rempah', 'Tembakau manis', 'Body tebal'],
+    imageUrl: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=600&q=80',
     notes: 'Proses giling basah khas Gayo. Body tebal dengan asam rendah, enak untuk French press dan tubruk.',
   },
   {
@@ -41,6 +42,7 @@ const beans = [
     altitudeMasl: 1600,
     restDays: 5,
     flavorNotes: ['Karamel', 'Kayu manis', 'Rempah hangat', 'Buah gelap'],
+    imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
     notes: 'Manis bersih dengan rempah hangat. Stabil di V60 dan paling enak di AeroPress.',
   },
   {
@@ -54,6 +56,7 @@ const beans = [
     altitudeMasl: 1350,
     restDays: 7,
     flavorNotes: ['Jeruk mandarin', 'Madu', 'Floral', 'Buah tropis'],
+    imageUrl: 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?auto=format&fit=crop&w=600&q=80',
     notes: 'Natural dengan keasaman cerah ala jeruk. Paling enak di V60 suhu 93-94 C.',
   },
   {
@@ -67,6 +70,7 @@ const beans = [
     altitudeMasl: 1400,
     restDays: 6,
     flavorNotes: ['Cokelat susu', 'Almond', 'Kacang', 'Bersih'],
+    imageUrl: 'https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?auto=format&fit=crop&w=600&q=80',
     notes: 'Profil seimbang dan bersih, aman untuk harian. Biji kopi andalan untuk espresso dan cold brew.',
   },
   {
@@ -80,6 +84,7 @@ const beans = [
     altitudeMasl: 1400,
     restDays: 5,
     flavorNotes: ['Gula merah', 'Almond', 'Manis', 'Asam lembut'],
+    imageUrl: 'https://images.unsplash.com/photo-1518832553480-cd0e625ed3e6?auto=format&fit=crop&w=600&q=80',
     notes: 'Honey process, manis seperti gula merah dengan asam lembut. Fleksibel untuk V60, AeroPress, dan moka pot.',
   },
   {
@@ -93,6 +98,7 @@ const beans = [
     altitudeMasl: 1700,
     restDays: 7,
     flavorNotes: ['Floral', 'Teh hitam', 'Lemon', 'Manis halus'],
+    imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80',
     notes: 'Cerah dan bersih dengan body ringan. Mudah terasa sour kalau air kurang panas, naikkan suhu ke 95-96 C.',
   },
   {
@@ -106,6 +112,7 @@ const beans = [
     altitudeMasl: 1300,
     restDays: 4,
     flavorNotes: ['Cokelat hitam', 'Herbal', 'Tembakau', 'Earthy'],
+    imageUrl: 'https://images.unsplash.com/photo-1580933073521-dc49ac0d4e6a?auto=format&fit=crop&w=600&q=80',
     notes: 'Giling basah, earthy dan berat. Cocok untuk French press dan tubruk di malam hari.',
   },
   {
@@ -119,6 +126,7 @@ const beans = [
     altitudeMasl: 1400,
     restDays: 5,
     flavorNotes: ['Rempah', 'Cedar', 'Cokelat pahit', 'Body penuh'],
+    imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=600&q=80',
     notes: 'Giling basah, body penuh dan rempah dominan. Pakai rasio lebih encer (1:16) supaya tidak berat.',
   },
   {
@@ -132,6 +140,7 @@ const beans = [
     altitudeMasl: 1300,
     restDays: 7,
     flavorNotes: ['Stroberi', 'Anggur', 'Madu', 'Fermentasi manis'],
+    imageUrl: 'https://images.unsplash.com/photo-1610632380989-680fe40816c6?auto=format&fit=crop&w=600&q=80',
     notes: 'Natural dengan aroma buah merah yang kuat. Jangan terlalu panas, agar fermentasinya tidak terlalu menonjol.',
   },
   {
@@ -145,6 +154,7 @@ const beans = [
     altitudeMasl: 1000,
     restDays: 4,
     flavorNotes: ['Cokelat pekat', 'Kacang panggang', 'Pahit manis', 'Crema tebal'],
+    imageUrl: 'https://images.unsplash.com/photo-1504630083234-14187a9df0f5?auto=format&fit=crop&w=600&q=80',
     notes: 'Robusta untuk tubruk dan campuran susu. Pahit dominan, enak dengan sedikit gula aren.',
   },
   {
@@ -158,6 +168,7 @@ const beans = [
     altitudeMasl: 800,
     restDays: 4,
     flavorNotes: ['Karamel gosong', 'Kacang tanah', 'Body tebal', 'Pahit'],
+    imageUrl: 'https://images.unsplash.com/photo-1524350876685-274059332603?auto=format&fit=crop&w=600&q=80',
     notes: 'Robusta harian dengan body tebal. Cocok untuk kopi susu dan tubruk.',
   },
   {
@@ -171,6 +182,7 @@ const beans = [
     altitudeMasl: 1350,
     restDays: 5,
     flavorNotes: ['Apel merah', 'Madu', 'Cokelat susu', 'Teh'],
+    imageUrl: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80',
     notes: 'Ringan, segar, dan mudah diminum. Biji kopi yang aman untuk pemula.',
   },
   {
@@ -184,6 +196,7 @@ const beans = [
     altitudeMasl: 1500,
     restDays: 5,
     flavorNotes: ['Cokelat', 'Rempah manis', 'Buah kering', 'Kompleks'],
+    imageUrl: 'https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&w=600&q=80',
     notes: 'Kompleks dengan rempah manis dan buah kering. Body penuh, enak di AeroPress dan French press.',
   },
   {
@@ -197,6 +210,7 @@ const beans = [
     altitudeMasl: 1350,
     restDays: 7,
     flavorNotes: ['Anggur merah', 'Rum', 'Permen buah', 'Winey'],
+    imageUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=600&q=80',
     notes: 'Fermentasi anaerob, aroma intens dan manis seperti buah. Lebih cocok untuk AeroPress; hindari French press.',
   },
   {
@@ -210,6 +224,7 @@ const beans = [
     altitudeMasl: 1950,
     restDays: 7,
     flavorNotes: ['Melati', 'Lemon', 'Bergamot', 'Teh'],
+    imageUrl: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=600&q=80',
     notes: 'Biji kopi pembanding non-Indonesia untuk latihan cupping. Floral dan sangat bersih.',
   },
   {
@@ -223,6 +238,7 @@ const beans = [
     altitudeMasl: 1700,
     restDays: 5,
     flavorNotes: ['Karamel', 'Apel', 'Cokelat', 'Seimbang'],
+    imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=600&q=80',
     notes: 'Seimbang dan konsisten, dipakai sebagai baseline untuk membandingkan biji kopi lain.',
   },
   {
@@ -237,6 +253,7 @@ const beans = [
     altitudeMasl: 1300,
     roastDaysAgo: 3,
     flavorNotes: ['Cokelat', 'Rempah', 'Kacang'],
+    imageUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80',
     notes: 'Baru dibeli, belum sempat diseduh. Giling basah.',
   },
 ];

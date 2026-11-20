@@ -50,10 +50,10 @@ export async function seedDatabase() {
 
       const { rows } = await client.query(
         `INSERT INTO beans (id, name, origin, roaster, process, roast_level, variety, altitude_masl,
-          roast_date, flavor_notes, notes)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::numeric,$9::date,$10::text[],$11) RETURNING id`,
+          roast_date, flavor_notes, image_url, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::numeric,$9::date,$10::text[],$11,$12) RETURNING id`,
         [randomUUID(), bean.name, bean.origin, bean.roaster || null, bean.process, bean.roastLevel,
-          bean.variety || null, bean.altitudeMasl ?? null, dateOnly(roastedAt), bean.flavorNotes, bean.notes || null]
+          bean.variety || null, bean.altitudeMasl ?? null, dateOnly(roastedAt), bean.flavorNotes, bean.imageUrl || null, bean.notes || null]
       );
       beanIds.set(bean.key, rows[0].id);
     }
