@@ -61,6 +61,18 @@ describe('SeduhLog API', () => {
     const result = await request(app).post('/api/beans').send({ name: 'x', origin: '' }).expect(400);
     expect(result.body.errors).toContainEqual({ field: 'name', message: 'Nama Biji Kopi minimal 2 karakter' });
   });
+  it('menyimpan foto biji kopi yang diunggah sebagai data URL', async () => {
+    const imageUrl = `data:image/webp;base64,${Buffer.alloc(500 * 1024).toString('base64')}`;
+    const created = await request(app).post('/api/beans').send({ name: 'Kopi Foto', origin: 'Aceh', imageUrl }).expect(201);
+    expect(created.body.data.imageUrl).toBe(imageUrl);
+    expect((await request(app).get(`/api/beans/${created.body.data.id}`).expect(200)).body.data.imageUrl).toBe(imageUrl);
+  });
+  it('menolak foto biji kopi dengan tipe data yang tidak didukung', async () => {
+    const result = await request(app).post('/api/beans').send({
+      name: 'Kopi Foto', origin: 'Aceh', imageUrl: 'data:image/svg+xml;base64,PHN2Zy8+'
+    }).expect(400);
+    expect(result.body.errors).toContainEqual(expect.objectContaining({ field: 'imageUrl' }));
+  });
   it('mengarsipkan Biji Kopi beserta Seduhan terkait dan memulihkannya bersama', async () => {
     const bean = await addBean();
     const brew = await request(app).post('/api/brews').send({ bean, method: 'v60', doseGrams: 15, waterGrams: 240, grindSize: 'medium', rating: 4 }).expect(201);

@@ -52,7 +52,14 @@ a { color: inherit; text-decoration: none; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 3px; }
 ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
 
-.app-shell { min-height: 100dvh; padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+.app-shell {
+  min-height: 100dvh;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse at 8% 12%, color-mix(in srgb,var(--primary) 8%,transparent),transparent 38%),
+    radial-gradient(ellipse at 92% 38%, color-mix(in srgb,var(--accent) 5%,transparent),transparent 34%),
+    var(--background);
+}
 .page-frame { width: min(100%, 560px); margin: 0 auto; padding: calc(28px + env(safe-area-inset-top)) 24px 38px; }
 main { position: relative; }
 @media (min-width: 760px) {
@@ -1121,6 +1128,67 @@ h2 { font-size: 21px; line-height: 1.14; }
   --glass-shimmer:    linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%, rgba(255,255,255,0.03) 100%);
 }
 
+/* -- Glass controls -- */
+.button-primary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb,var(--glass-border) 72%,var(--primary));
+  color: #fff;
+  background: color-mix(in srgb,var(--primary) 90%,transparent);
+  backdrop-filter: var(--glass-filter-id) blur(16px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: var(--glass-filter-id) blur(16px) saturate(var(--glass-saturation));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -1px 0 rgba(0,0,0,.12),
+    0 8px 20px color-mix(in srgb,var(--primary) 22%,transparent);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+.button-primary::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(155deg,rgba(255,255,255,.34),rgba(255,255,255,.08) 42%,rgba(0,0,0,.08));
+  pointer-events: none;
+  content: '';
+}
+.button-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.12),
+    0 12px 26px color-mix(in srgb,var(--primary) 28%,transparent);
+}
+.button-primary:active:not(:disabled) { transform: scale(.985); }
+:root[data-theme="dark"] .button-primary { color: #11221b; }
+.button-outline {
+  border-color: var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturation));
+  box-shadow: inset 0 1px 0 color-mix(in srgb,var(--glass-border) 75%,transparent),var(--glass-shadow);
+}
+.field input, .field select, .field textarea, .timer-controls-top select, .chip-entry input {
+  border-color: color-mix(in srgb,var(--border) 68%,var(--glass-border));
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(14px) saturate(var(--glass-saturation));
+  box-shadow: inset 0 1px 0 color-mix(in srgb,var(--glass-border) 64%,transparent),
+    inset 0 -1px 0 color-mix(in srgb,var(--primary) 5%,transparent);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.field input:focus, .field select:focus, .field textarea:focus, .timer-controls-top select:focus, .chip-entry input:focus {
+  border-color: color-mix(in srgb,var(--primary) 52%,var(--glass-border));
+  background: var(--glass-bg-strong);
+  box-shadow: inset 0 1px 0 color-mix(in srgb,var(--glass-border) 80%,transparent),
+    0 0 0 3px color-mix(in srgb,var(--primary) 12%,transparent);
+}
+.button.sticky-save {
+  min-height: 58px;
+  border-radius: 17px;
+  font-size: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), inset 0 -1px 0 rgba(0,0,0,.12),
+    0 10px 24px color-mix(in srgb,var(--primary) 24%,transparent);
+}
+
 /* -- Cards -- */
 .card {
   position: relative;
@@ -1367,6 +1435,7 @@ h2 { font-size: 21px; line-height: 1.14; }
    Visual image gallery in BeanForm
    ============================================================ */
 .bean-image-preview {
+  position: relative;
   margin-bottom: 10px;
   border-radius: 11px;
   overflow: hidden;
@@ -1380,6 +1449,25 @@ h2 { font-size: 21px; line-height: 1.14; }
   object-fit: cover;
   display: block;
 }
+.bean-image-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  color: var(--text);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.bean-image-upload { width: 100%; gap: 8px; }
+.bean-image-hint { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.field .bean-image-hint + label { margin-top: 13px; }
+.bean-image-upload:disabled { opacity: .65; cursor: wait; }
 
 .bean-image-presets { margin-top: 10px; }
 .bean-image-presets > span {

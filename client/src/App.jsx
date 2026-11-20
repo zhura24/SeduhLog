@@ -7,7 +7,7 @@ import { api, jsonBody, ApiError } from './lib/api.js';
 import { calculateRatio, grindLabel, methodLabel, methods } from './lib/methods.js';
 import { useBrewTimer } from './hooks/useBrewTimer.js';
 import { profile } from './config/profile.js';
-import { getBeanImage, BEAN_IMAGE_PRESETS } from './lib/beanImages.js';
+import { getBeanImage, BEAN_IMAGE_PRESETS, prepareBeanImage } from './lib/beanImages.js';
 
 const queryKeys = { beans: ['beans'], brews: ['brews'], stats: ['stats'], methods: ['methods'], archive: ['archive'] };
 const fetchData = async path => (await api(path)).data;
@@ -363,16 +363,16 @@ function LiquidGlassFilter({ id = 'lg-filter-main' }) {
     <svg style={{position:'absolute',width:0,height:0,pointerEvents:'none'}} aria-hidden="true">
       <defs>
         <filter id={id} colorInterpolationFilters="sRGB" x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.65 0.65" numOctaves="3" seed="2" result="noise"/>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="dispRed"/>
+          <feTurbulence type="fractalNoise" baseFrequency="0.035 0.045" numOctaves="2" seed="2" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="16" xChannelSelector="R" yChannelSelector="G" result="dispRed"/>
           <feColorMatrix in="dispRed" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red"/>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="dispGreen"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" xChannelSelector="R" yChannelSelector="G" result="dispGreen"/>
           <feColorMatrix in="dispGreen" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green"/>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" result="dispBlue"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="24" xChannelSelector="R" yChannelSelector="G" result="dispBlue"/>
           <feColorMatrix in="dispBlue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue"/>
           <feBlend in="red" in2="green" mode="screen" result="rg"/>
           <feBlend in="rg" in2="blue" mode="screen" result="output"/>
-          <feGaussianBlur in="output" stdDeviation="1.2"/>
+          <feGaussianBlur in="output" stdDeviation="1.5"/>
         </filter>
       </defs>
     </svg>
@@ -840,7 +840,7 @@ function BeanForm() {
   const {id}=useParams(); const editing=Boolean(id); const navigate=useNavigate(); const queryClient=useQueryClient(); const {toast}=useOutletContext();
   const existing=useQuery({queryKey:[...queryKeys.beans,id],queryFn:()=>fetchData(`/beans/${id}`),enabled:editing});
   const [form,setForm]=useState({name:'',origin:'',roaster:'',process:'washed',roastLevel:'medium',variety:'',altitudeMasl:'',roastDate:'',flavorNotes:[],imageUrl:'',notes:''});
-  const [flavor,setFlavor]=useState(''); const [errors,setErrors]=useState({});
+  const [flavor,setFlavor]=useState(''); const [errors,setErrors]=useState({}); const [imageBusy,setImageBusy]=useState(false); const imageInput=useRef(null);
   useEffect(()=>{if(existing.data)setForm({...existing.data,altitudeMasl:existing.data.altitudeMasl??'',roastDate:existing.data.roastDate?.slice(0,10)||''});},[existing.data]);
   const save=useMutation({
     mutationFn:data=>editing?jsonMutation(`/beans/${id}`,'PUT',data):jsonMutation('/beans','POST',data),
@@ -848,6 +848,15 @@ function BeanForm() {
     onError:error=>{const next=mapFieldErrors(error.errors);setErrors(next);focusFirstError(next,beanErrorIds);toast(error.message,'error');}
   });
   const set=(key,value)=>{setForm(current=>({...current,[key]:value}));setErrors(current=>({...current,[key]:''}));};
+  const selectImage=async event=>{
+    const file=event.target.files?.[0];
+    event.target.value='';
+    if(!file)return;
+    setImageBusy(true);
+    try{set('imageUrl',await prepareBeanImage(file));}
+    catch(error){setErrors(current=>({...current,imageUrl:error.message}));toast(error.message,'error');}
+    finally{setImageBusy(false);}
+  };
   const addFlavor=()=>{const value=flavor.trim();if(!value||form.flavorNotes.includes(value))return;if(form.flavorNotes.length>=8){setErrors(current=>({...current,flavorNotes:'Catatan rasa maksimal 8 pilihan'}));return;}set('flavorNotes',[...form.flavorNotes,value]);setFlavor('');};
   const submit=event=>{
     event.preventDefault();
@@ -855,7 +864,10 @@ function BeanForm() {
     if(form.name.trim().length<2)next.name='Nama Biji Kopi minimal 2 karakter';
     if(!form.origin.trim())next.origin='Asal Biji Kopi wajib diisi';
     if(form.altitudeMasl!==''&&(!Number.isFinite(Number(form.altitudeMasl))||Number(form.altitudeMasl)<0||Number(form.altitudeMasl)>3000))next.altitudeMasl='Ketinggian harus antara 0–3000 mdpl';
-    if(form.imageUrl){try{const url=new URL(form.imageUrl);if(!['http:','https:'].includes(url.protocol))next.imageUrl='URL gambar harus menggunakan http atau https';}catch{next.imageUrl='Masukkan URL gambar yang valid';}}
+    if(form.imageUrl){
+      const isUploadedImage=/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(form.imageUrl)&&form.imageUrl.length<=900000;
+      if(!isUploadedImage){try{const url=new URL(form.imageUrl);if(!['http:','https:'].includes(url.protocol))next.imageUrl='URL gambar harus menggunakan http atau https';}catch{next.imageUrl='Masukkan URL gambar yang valid';}}
+    }
     if(form.flavorNotes.length>8)next.flavorNotes='Catatan rasa maksimal 8 pilihan';
     if((form.notes||'').length>500)next.notes='Catatan tambahan maksimal 500 karakter';
     setErrors(next);
@@ -871,12 +883,16 @@ function BeanForm() {
     <div className="field-row"><div className="field"><label htmlFor="bean-variety">Varietas</label><input id="bean-variety" value={form.variety||''} onChange={e=>set('variety',e.target.value)}/></div><div className="field"><label htmlFor="bean-altitude">Ketinggian (mdpl)</label><input id="bean-altitude" type="number" min="0" max="3000" aria-invalid={Boolean(errors.altitudeMasl)} aria-describedby={errors.altitudeMasl?'bean-altitude-error':undefined} value={form.altitudeMasl} onChange={e=>set('altitudeMasl',e.target.value)}/><FieldError id="bean-altitude-error" error={errors.altitudeMasl}/></div></div>
     <div className="field"><label htmlFor="bean-roast-date">Tanggal sangrai</label><input id="bean-roast-date" type="date" aria-invalid={Boolean(errors.roastDate)} aria-describedby={errors.roastDate?'bean-roast-date-error':undefined} value={form.roastDate||''} onChange={e=>set('roastDate',e.target.value)}/><FieldError id="bean-roast-date-error" error={errors.roastDate}/></div>
     <div className="field">
-      <label htmlFor="bean-image">URL gambar (opsional)</label>
-      {form.imageUrl&&<div className="bean-image-preview"><img src={form.imageUrl} alt="Preview gambar biji kopi" loading="lazy" onError={e=>{e.target.style.display='none';}}/></div>}
-      <input id="bean-image" type="url" aria-invalid={Boolean(errors.imageUrl)} aria-describedby={errors.imageUrl?'bean-image-error':undefined} value={form.imageUrl||''} onChange={e=>set('imageUrl',e.target.value)} placeholder="https://..."/>
+      <label htmlFor="bean-image-file">Foto biji kopi (opsional)</label>
+      {form.imageUrl&&<div className="bean-image-preview"><img src={form.imageUrl} alt="Preview foto biji kopi" onError={e=>{e.target.style.display='none';}}/><button className="bean-image-remove" type="button" onClick={()=>set('imageUrl','')} aria-label="Hapus foto biji kopi"><X size={16}/></button></div>}
+      <button className="button button-outline bean-image-upload" type="button" disabled={imageBusy||save.isPending} onClick={()=>imageInput.current?.click()}><Upload size={16}/>{imageBusy?'Memproses foto...':'Pilih foto dari perangkat'}</button>
+      <input ref={imageInput} id="bean-image-file" className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={selectImage}/>
+      <small className="bean-image-hint">JPG, PNG, atau WebP · maksimal 8 MB. Foto akan dikompres dan disimpan bersama data biji kopi.</small>
+      <label htmlFor="bean-image">Atau masukkan URL gambar</label>
+      <input id="bean-image" type="url" aria-invalid={Boolean(errors.imageUrl)} aria-describedby={errors.imageUrl?'bean-image-error':undefined} value={form.imageUrl&&!form.imageUrl.startsWith('data:')?form.imageUrl:''} onChange={e=>set('imageUrl',e.target.value)} placeholder="https://..."/>
       <FieldError id="bean-image-error" error={errors.imageUrl}/>
       <div className="bean-image-presets">
-        <span>Atau pilih dari koleksi gambar:</span>
+        <span>Atau pilih dari koleksi gambar</span>
         <div className="preset-grid">
           {BEAN_IMAGE_PRESETS.map(preset=>(
             <button key={preset.id} type="button" className={`preset-thumb${form.imageUrl===preset.url?' selected':''}`} onClick={()=>set('imageUrl',preset.url)} title={preset.description} aria-label={preset.name}>
@@ -890,7 +906,7 @@ function BeanForm() {
     </div>
     <div className="field"><label htmlFor="bean-flavors">Catatan rasa (maks. 8)</label><div className="chip-entry"><input id="bean-flavors" aria-invalid={Boolean(errors.flavorNotes)} aria-describedby={errors.flavorNotes?'bean-flavors-error':undefined} value={flavor} onChange={e=>setFlavor(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addFlavor();}}} placeholder="Ketik lalu tekan Enter"/><button type="button" onClick={addFlavor}><Plus size={17}/></button></div><FieldError id="bean-flavors-error" error={errors.flavorNotes}/><div className="chip-list">{form.flavorNotes.map(item=><button type="button" className="taste-chip removable" key={item} onClick={()=>set('flavorNotes',form.flavorNotes.filter(x=>x!==item))}>{item}<X size={13}/></button>)}</div></div>
     <div className="field"><label htmlFor="bean-notes">Catatan tambahan</label><textarea id="bean-notes" maxLength="500" rows="3" aria-invalid={Boolean(errors.notes)} aria-describedby={errors.notes?'bean-notes-error':undefined} value={form.notes||''} onChange={e=>set('notes',e.target.value)}/><FieldError id="bean-notes-error" error={errors.notes}/></div>
-    <button className="button button-primary sticky-save" disabled={save.isPending}>{save.isPending?'Menyimpan...':'Simpan Biji Kopi'} <Check size={18}/></button>
+    <button className="button button-primary sticky-save" disabled={save.isPending||imageBusy}>{save.isPending?'Menyimpan...':imageBusy?'Memproses foto...':'Simpan Biji Kopi'} <Check size={18}/></button>
   </form>}</main>;
 }
 

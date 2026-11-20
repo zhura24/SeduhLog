@@ -82,6 +82,68 @@ export const BEAN_IMAGE_MAP = {
   sidikalang: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=600&q=80'
 };
 
+const MAX_SOURCE_SIZE = 8 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 600 * 1024;
+const MAX_IMAGE_DIMENSION = 1280;
+
+const readAsDataUrl = blob => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(new Error('Foto tidak dapat dibaca.'));
+  reader.readAsDataURL(blob);
+});
+
+const loadImage = source => new Promise((resolve, reject) => {
+  const image = new Image();
+  image.onload = () => resolve(image);
+  image.onerror = () => reject(new Error('Format foto tidak dapat dibuka.'));
+  image.src = source;
+});
+
+const canvasToBlob = (canvas, type, quality) => new Promise(resolve => {
+  canvas.toBlob(resolve, type, quality);
+});
+
+export async function prepareBeanImage(file) {
+  if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    throw new Error('Pilih foto berformat JPG, PNG, atau WebP.');
+  }
+  if (file.size > MAX_SOURCE_SIZE) {
+    throw new Error('Ukuran foto maksimal 8 MB.');
+  }
+
+  const image = await loadImage(await readAsDataUrl(file));
+  if (!image.naturalWidth || !image.naturalHeight) {
+    throw new Error('Foto tidak memiliki ukuran yang valid.');
+  }
+
+  let scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
+  const formats = ['image/webp', 'image/jpeg'];
+  const qualities = [0.84, 0.74, 0.64, 0.54];
+
+  for (let resize = 0; resize < 5; resize += 1) {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Foto tidak dapat diproses di perangkat ini.');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    for (const format of formats) {
+      for (const quality of qualities) {
+        const blob = await canvasToBlob(canvas, format, quality);
+        if (blob?.type.startsWith('image/') && blob.size <= MAX_IMAGE_SIZE) {
+          return readAsDataUrl(blob);
+        }
+      }
+    }
+
+    scale *= 0.8;
+  }
+
+  throw new Error('Foto terlalu besar untuk disimpan. Coba pilih foto lain.');
+}
+
 export function getBeanImage(bean) {
   if (bean?.imageUrl && typeof bean.imageUrl === 'string' && bean.imageUrl.trim() !== '') {
     return bean.imageUrl;

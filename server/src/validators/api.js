@@ -14,7 +14,16 @@ export const beanSchema = z.object({
   flavorNotes: z.array(z.string()).max(8, 'Catatan rasa maksimal 8 pilihan').optional(),
   imageUrl: z.union([
     z.literal(''),
-    z.string().url('URL gambar tidak valid').refine(value => /^https?:/i.test(value), 'URL gambar harus menggunakan http atau https')
+    z.string().max(900_000, 'Ukuran foto terlalu besar').refine(value => {
+      if (/^data:image\/(?:jpeg|png|webp);base64,/i.test(value)) {
+        return /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(value);
+      }
+      try {
+        return ['http:', 'https:'].includes(new URL(value).protocol);
+      } catch {
+        return false;
+      }
+    }, 'Masukkan URL gambar http/https yang valid atau foto JPG, PNG, atau WebP')
   ]).optional(),
   notes: z.string().max(500, 'Catatan tambahan maksimal 500 karakter').optional().or(z.literal(''))
 });

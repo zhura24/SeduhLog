@@ -16,6 +16,7 @@ app.use(cors({ origin(origin, callback) {
   const allowed = !origin || origins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin === 'http://localhost:5173');
   callback(allowed ? null : new Error('Origin tidak diizinkan'), allowed);
 } }));
+app.use('/api/beans', express.json({ limit: '1mb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(morgan('tiny'));
 app.use('/api', rateLimit({
