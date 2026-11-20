@@ -357,7 +357,29 @@ function AppLayout({ toast, setToast, theme, setTheme }) {
   </div>;
 }
 
+function LiquidGlassFilter({ id = 'lg-filter-main' }) {
+  return (
+    <svg style={{position:'absolute',width:0,height:0,pointerEvents:'none'}} aria-hidden="true">
+      <defs>
+        <filter id={id} colorInterpolationFilters="sRGB" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65 0.65" numOctaves="3" seed="2" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" result="dispRed"/>
+          <feColorMatrix in="dispRed" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="red"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" result="dispGreen"/>
+          <feColorMatrix in="dispGreen" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="green"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" result="dispBlue"/>
+          <feColorMatrix in="dispBlue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blue"/>
+          <feBlend in="red" in2="green" mode="screen" result="rg"/>
+          <feBlend in="rg" in2="blue" mode="screen" result="output"/>
+          <feGaussianBlur in="output" stdDeviation="1.2"/>
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
 function BottomNav() {
+  const location = useLocation();
   const tabs = [
     { to: '/', label: 'Beranda', icon: Home, end: true },
     { to: '/brews', label: 'Seduhan', icon: BookOpen },
@@ -365,9 +387,30 @@ function BottomNav() {
     { to: '/timer', label: 'Timer', icon: TimerIcon },
     { to: '/profile', label: 'Profil', icon: MoreHorizontal }
   ];
-  return <nav className="bottom-nav" aria-label="Navigasi utama">{tabs.map(({to,label,icon:Icon,end}) =>
-    <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>{({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
-    </NavLink>)}</nav>;
+  /* Decide FAB destination from current tab */
+  const fabTo = location.pathname.startsWith('/beans') ? '/beans/new' : '/brews/new';
+  const fabLabel = location.pathname.startsWith('/beans') ? 'Tambah Biji Kopi' : 'Tambah seduhan';
+  return (
+    <nav className="bottom-nav" aria-label="Navigasi utama">
+      <LiquidGlassFilter id="lg-nav"/>
+      {tabs.slice(0,2).map(({to,label,icon:Icon,end}) =>
+        <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>
+          {({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
+        </NavLink>
+      )}
+      {/* Centre FAB pill */}
+      <div className="nav-fab-wrap">
+        <Link to={fabTo} className="nav-fab" aria-label={fabLabel}>
+          <Plus size={24} strokeWidth={2.2}/>
+        </Link>
+      </div>
+      {tabs.slice(2,5).map(({to,label,icon:Icon,end}) =>
+        <NavLink key={to} to={to} end={end} className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`} aria-label={label}>
+          {({isActive}) => <><Icon size={21} strokeWidth={isActive ? 2.4 : 1.8}/><span>{label}</span></>}
+        </NavLink>
+      )}
+    </nav>
+  );
 }
 
 function PageHeader({ title, back, eyebrow, action }) {
@@ -520,7 +563,6 @@ function BrewList() {
     <div className="list-tools"><button className={`favorite-filter ${favorite ? 'selected' : ''}`} onClick={() => setFavorite(!favorite)}><Heart size={16} fill={favorite ? 'currentColor' : 'none'}/> Favorit</button><select aria-label="Urutkan seduhan" value={sort} onChange={event => setSort(event.target.value)}><option value="newest">Terbaru</option><option value="oldest">Terlama</option><option value="rating">Rating tertinggi</option></select></div>
     <DataState query={query} empty="Belum ada seduhan yang cocok.">{items.length ? <div className="stack">{items.map(item => <BrewCard key={item.id} brew={item}/>)}</div> : null}</DataState>
     {query.hasNextPage && <button className="button button-outline load-more" disabled={query.isFetchingNextPage} onClick={() => query.fetchNextPage()}>{query.isFetchingNextPage ? 'Memuat...' : 'Muat lebih banyak'}<ArrowDown size={16}/></button>}
-    <Fab to="/brews/new" label="Tambah seduhan"/>
   </main>;
 }
 
@@ -542,7 +584,6 @@ function BeanList() {
     <div className="list-tools"><span className="list-count"><Leaf size={15}/> Pilihan dari rakmu</span><select aria-label="Urutkan Biji Kopi" value={sort} onChange={event=>setSort(event.target.value)}><option value="newest">Terbaru</option><option value="name">Nama A–Z</option></select></div>
     <DataState query={query} empty="Belum ada Biji Kopi yang cocok.">{items.length ? <div className="stack">{items.map(bean => <Link to={`/beans/${bean.id}`} className="bean-card card" key={bean.id}><BeanThumb bean={bean}/><div className="bean-card-body"><b>{bean.name}</b><span>{bean.origin}</span><div className="bean-badges"><Badge>{bean.process}</Badge><Badge tone="warm">{bean.roastLevel}</Badge></div><div className="flavor-row">{(bean.flavorNotes||[]).slice(0,3).map(note=><span key={note}>{note}</span>)}{bean.flavorNotes?.length>3&&<span>+{bean.flavorNotes.length-3}</span>}</div></div><div className="bean-count">{bean.brewCount || 0}<small>seduhan</small></div><ChevronRight className="row-chevron" size={17}/></Link>)}</div> : null}</DataState>
     {query.hasNextPage && <button className="button button-outline load-more" onClick={()=>query.fetchNextPage()}>Muat lebih banyak <ArrowDown size={16}/></button>}
-    <Fab to="/beans/new" label="Tambah Biji Kopi"/>
   </main>;
 }
 

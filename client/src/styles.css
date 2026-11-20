@@ -1072,40 +1072,50 @@ h2 { font-size: 21px; line-height: 1.14; }
 
 
 /* ============================================================
-   LIQUID GLASS / GLASSMORPHISM SYSTEM
-   Apple-style frosted glass for cards, nav, toast, dialog
+   LIQUID GLASS SYSTEM — Apple-style SVG displacement + blur
    ============================================================ */
 
-/* -- Glass design token variables -- */
+/* -- Glass design tokens -- */
 :root {
-  --glass-bg:          rgba(255, 253, 248, 0.72);
-  --glass-bg-strong:   rgba(255, 253, 248, 0.88);
-  --glass-border:      rgba(255, 255, 255, 0.52);
-  --glass-shadow:      0 8px 32px rgba(24, 59, 50, 0.10), 0 1px 0 rgba(255,255,255,0.65) inset;
-  --glass-blur:        blur(22px) saturate(1.5);
-  --glass-shimmer:     linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 55%, rgba(255,255,255,0.07) 100%);
+  --glass-bg:         rgba(255, 253, 248, 0.55);
+  --glass-bg-strong:  rgba(255, 253, 248, 0.80);
+  --glass-border:     rgba(255, 255, 255, 0.60);
+  --glass-inset:      inset 0 0 2px 1px rgba(255,255,255,0.45),
+                      inset 0 0 10px 4px rgba(255,255,255,0.18),
+                      inset 0 4px 16px rgba(10,20,15,0.05),
+                      inset 0 6px 40px rgba(10,20,15,0.04);
+  --glass-shadow:     0 8px 32px rgba(24,59,50,0.12);
+  /* SVG displacement-map filter applied via backdrop-filter */
+  --glass-filter-id:  url(#lg-nav);
+  --glass-saturation: 1.45;
+  --glass-frost:      0.08;
+  --glass-blur:       blur(22px) saturate(var(--glass-saturation));
+  --glass-shimmer:    linear-gradient(135deg, rgba(255,255,255,0.28) 0%, transparent 50%, rgba(255,255,255,0.08) 100%);
 }
 :root[data-theme="dark"] {
-  --glass-bg:          rgba(22, 36, 31, 0.70);
-  --glass-bg-strong:   rgba(22, 36, 31, 0.88);
-  --glass-border:      rgba(255, 255, 255, 0.10);
-  --glass-shadow:      0 8px 32px rgba(0,0,0,0.30), 0 1px 0 rgba(255,255,255,0.07) inset;
-  --glass-blur:        blur(22px) saturate(1.4);
-  --glass-shimmer:     linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%, rgba(255,255,255,0.03) 100%);
+  --glass-bg:         rgba(18, 30, 25, 0.55);
+  --glass-bg-strong:  rgba(18, 30, 25, 0.78);
+  --glass-border:     rgba(255, 255, 255, 0.11);
+  --glass-inset:      inset 0 0 2px 1px rgba(255,255,255,0.14),
+                      inset 0 0 10px 4px rgba(255,255,255,0.06),
+                      inset 0 4px 16px rgba(0,0,0,0.12),
+                      inset 0 6px 40px rgba(0,0,0,0.10);
+  --glass-shadow:     0 8px 32px rgba(0,0,0,0.32);
+  --glass-frost:      0.06;
+  --glass-saturation: 1.3;
+  --glass-shimmer:    linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%, rgba(255,255,255,0.03) 100%);
 }
 
-/* -- Cards (main card component) -- */
+/* -- Cards -- */
 .card {
   position: relative;
   background: var(--glass-bg) !important;
   border: 1px solid var(--glass-border) !important;
-  box-shadow: var(--glass-shadow) !important;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow), var(--glass-inset) !important;
+  backdrop-filter: var(--glass-filter-id) var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-filter-id) var(--glass-blur);
   overflow: hidden;
 }
-
-/* Shimmer/highlight layer on cards */
 .card::before {
   content: '';
   position: absolute;
@@ -1115,53 +1125,48 @@ h2 { font-size: 21px; line-height: 1.14; }
   pointer-events: none;
   z-index: 0;
 }
-
-/* Keep card children above shimmer */
 .card > * { position: relative; z-index: 1; }
 
-/* -- Bottom navigation (enhanced) -- */
+/* -- Bottom nav -- */
 .bottom-nav {
   background: var(--glass-bg-strong) !important;
-  border-top-color: var(--glass-border) !important;
-  backdrop-filter: blur(28px) saturate(1.7);
-  -webkit-backdrop-filter: blur(28px) saturate(1.7);
-  box-shadow: 0 -1px 0 var(--glass-border), 0 -10px 30px rgba(24,59,50,0.07) !important;
+  border-color: var(--glass-border) !important;
+  backdrop-filter: var(--glass-filter-id) blur(28px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: var(--glass-filter-id) blur(28px) saturate(var(--glass-saturation));
+  box-shadow: 0 -1px 0 var(--glass-border), var(--glass-inset), var(--glass-shadow) !important;
 }
 
-/* -- Toast notifications -- */
+/* -- Toast -- */
 .toast {
   background: var(--glass-bg-strong) !important;
   border-color: var(--glass-border) !important;
-  backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  box-shadow: 0 4px 24px rgba(24,59,50,0.14), 0 1px 0 rgba(255,255,255,0.5) inset !important;
-}
-:root[data-theme="dark"] .toast {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.30), 0 1px 0 rgba(255,255,255,0.08) inset !important;
+  backdrop-filter: blur(20px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(20px) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow), var(--glass-inset) !important;
 }
 
-/* -- Dialog / modal -- */
+/* -- Dialog -- */
 .dialog {
   background: var(--glass-bg-strong) !important;
   border: 1px solid var(--glass-border) !important;
-  backdrop-filter: blur(28px) saturate(1.6);
-  -webkit-backdrop-filter: blur(28px) saturate(1.6);
-  box-shadow: 0 20px 60px rgba(24,59,50,0.18), 0 1px 0 rgba(255,255,255,0.55) inset !important;
+  backdrop-filter: blur(30px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(30px) saturate(var(--glass-saturation));
+  box-shadow: 0 20px 60px rgba(24,59,50,0.20), var(--glass-inset) !important;
 }
 :root[data-theme="dark"] .dialog {
-  box-shadow: 0 20px 60px rgba(0,0,0,0.40), 0 1px 0 rgba(255,255,255,0.08) inset !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.42), var(--glass-inset) !important;
 }
 
-/* -- Install banner & bottom sheet -- */
-.install-banner,
-.install-sheet {
+/* -- Install banner -- */
+.install-banner, .install-sheet {
   background: var(--glass-bg-strong) !important;
   border-color: var(--glass-border) !important;
-  backdrop-filter: blur(22px) saturate(1.5);
-  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(22px) saturate(var(--glass-saturation));
+  box-shadow: var(--glass-shadow), var(--glass-inset) !important;
 }
 
-/* -- Stat cards (dashboard grid) -- */
+/* -- Stat cards -- */
 .stat-card {
   background: var(--glass-bg) !important;
   border-color: var(--glass-border) !important;
@@ -1169,39 +1174,88 @@ h2 { font-size: 21px; line-height: 1.14; }
   -webkit-backdrop-filter: blur(14px) saturate(1.3);
 }
 
-/* -- Page header (sticky top bar) -- */
+/* -- Page header -- */
 .page-header {
-  background: color-mix(in srgb, var(--background) 82%, transparent) !important;
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  background: color-mix(in srgb, var(--background) 78%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(var(--glass-saturation));
+  -webkit-backdrop-filter: blur(18px) saturate(var(--glass-saturation));
   border-bottom-color: var(--glass-border) !important;
 }
 
-/* -- Quick brew & brew cards -- */
-.quick-brew-card,
-.brew-card {
+/* -- Brew & quick brew cards -- */
+.quick-brew-card, .brew-card {
   background: var(--glass-bg) !important;
   border-color: var(--glass-border) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* -- Splash step badge -- */
+/* -- Splash badge -- */
 .splash-step-badge {
-  background: rgba(255,255,255,0.35) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.32) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255,255,255,0.45) !important;
+  box-shadow: var(--glass-inset);
 }
 :root[data-theme="dark"] .splash-step-badge {
-  background: rgba(24,59,50,0.50) !important;
+  background: rgba(24,59,50,0.48) !important;
   border-color: rgba(255,255,255,0.12) !important;
 }
 
-/* Keep dark hero/feature panels unaffected by glass (they have their own bg) */
-.home-hero-copy,
-.favorite-bean-card,
-.feature-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* Keep dark feature panels unaffected */
+.home-hero-copy, .favorite-bean-card, .feature-panel {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+
+/* ============================================================
+   NAV-FAB — Centre pill button inside bottom nav
+   ============================================================ */
+/* Nav needs 6 columns: 2 items | FAB | 3 items */
+.bottom-nav { grid-template-columns: repeat(2,1fr) auto repeat(3,1fr) !important; align-items: center; }
+
+.nav-fab-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.nav-fab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  color: #fff;
+  /* Liquid glass pill with SVG filter */
+  background: hsl(0 0% 100% / var(--glass-frost, 0.08));
+  -webkit-backdrop-filter: var(--glass-filter-id) blur(20px) saturate(1.5);
+  backdrop-filter: var(--glass-filter-id) blur(20px) saturate(1.5);
+  box-shadow:
+    inset 0 0 2px 1px rgba(255,255,255,0.50),
+    inset 0 0 10px 4px rgba(255,255,255,0.20),
+    inset 0 4px 20px rgba(10,20,15,0.06),
+    0 6px 20px rgba(24,59,50,0.22);
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+  overflow: hidden;
+}
+.nav-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(145deg, rgba(255,255,255,0.35) 0%, transparent 55%, rgba(255,255,255,0.10) 100%);
+  pointer-events: none;
+}
+.nav-fab svg { position: relative; z-index: 1; color: var(--primary); }
+:root[data-theme="dark"] .nav-fab svg { color: #a4c7ae; }
+.nav-fab:hover { transform: scale(1.08); box-shadow: inset 0 0 2px 1px rgba(255,255,255,0.55), inset 0 0 10px 4px rgba(255,255,255,0.22), 0 10px 28px rgba(24,59,50,0.28); }
+.nav-fab:active { transform: scale(0.96); }
+
+/* Hide old floating .fab (kept as fallback component) */
+.fab { display: none; }
 
 /* ============================================================
    BEAN IMAGE PRESET PICKER
