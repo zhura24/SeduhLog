@@ -1303,8 +1303,12 @@ export default function App() {
   const [showSplash,setShowSplash]=useState(true);
   useLayoutEffect(()=>{
     const root=document.documentElement;
+    const themeColor=document.querySelector('meta[name="theme-color"]');
     const media=window.matchMedia('(prefers-color-scheme: dark)');
-    const applyTheme=()=>{root.dataset.theme=theme==='system'?(media.matches?'dark':'light'):theme;};
+    const applyTheme=()=>{
+      root.dataset.theme=theme==='system'?(media.matches?'dark':'light'):theme;
+      themeColor?.setAttribute('content',getComputedStyle(root).getPropertyValue('--background').trim());
+    };
     applyTheme();
     localStorage.setItem('seduhlog-theme',theme);
     media.addEventListener?.('change',applyTheme);
