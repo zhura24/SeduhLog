@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { prepareBeanImage } from './beanImages.js';
+import { getBeanImage, prepareBeanImage } from './beanImages.js';
+
+describe('gambar biji kopi', () => {
+  it('uses the selected image URL', () => {
+    expect(getBeanImage({ imageUrl: 'https://example.com/coffee.jpg' }))
+      .toBe('https://example.com/coffee.jpg');
+  });
+
+  it('does not assign an image when the user has not selected one', () => {
+    expect(getBeanImage({ name: 'Gayo Honey', process: 'honey', roastLevel: 'dark' }))
+      .toBe('');
+  });
+
+  it('treats a blank image URL as no image', () => {
+    expect(getBeanImage({ imageUrl: '  ' })).toBe('');
+  });
+});
 
 describe('persiapan foto biji kopi', () => {
   it('menolak format file yang tidak didukung', async () => {
